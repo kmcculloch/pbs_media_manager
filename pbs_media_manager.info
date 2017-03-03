@@ -1,0 +1,6 @@
+name = PBS Media Manager API
+description = An API only module for interacting with the PBS Media Manager API
+
+configure = admin/config/pbs_media_manager
+package = Media
+core = 7.x

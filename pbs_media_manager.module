@@ -1,0 +1,202 @@
+<?php
+
+/**
+ * @file
+ * Hooks for integration w/ PBS Media Manager API.
+ */
+
+define('PBS_MEDIA_MANAGER_SETTING_URL', 'admin/config/media/pbs_media_manager');
+
+/**
+ * Implements hook_permission().
+ */
+function pbs_media_manager_permission() {
+  return array(
+    'administer pbs_media_manager' => array(
+      'title' => t('Administer Media Manager settings'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function pbs_media_manager_menu() {
+  $items = array();
+
+  $items[PBS_MEDIA_MANAGER_SETTING_URL] = array(
+    'title' => 'PBS Media Manager',
+    'description' => 'Manage settings for the PBS Media Manager API',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('pbs_media_manager_admin_site_settings'),
+    'access arguments' => array('administer pbs_media_manager'),
+    'file' => 'pbs_media_manager.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Gets configuration settings.
+ *
+ * @return array
+ *   Associative array of config settings (api_key, callsign, channels).
+ */
+function pbs_media_manager_get_config() {
+  $config = &drupal_static(__FUNCTION__);
+
+  if (!isset($config)) {
+    $config = array(
+      'api_key' => variable_get('pbs_media_manager_key'),
+      'api_secret' => variable_get('pbs_media_manager_secret'),
+    );
+  }
+
+  return $config;
+}
+
+/**
+ * Make a request to the PBS Core Data Model API.
+ *
+ * @param string|array $method
+ *   The API method for the request, can be a string or array.
+ *   arrays will be exploded to allow for things like
+ *   '/shows/downton-abbey'.
+ * @param array $args
+ *   Associative array of arguments to add to the url. For example:
+ *   array('frachise-slug' => 'masterpiece').
+ * @param int $cache_expire
+ *   The number of seconds from now to expire the cache for this request, or 0
+ *   to not cache request.
+ * @param string $api_key
+ *   The "API ID" from PBS (will get from config if not set).
+ * @param string $api_secret
+ *   The "API Secret" from PBS (will get from config if not set).
+ *
+ * @return object|bool
+ *   Object Response data from the request
+ */
+function pbs_media_manager_request($method, array $args = array(), $cache_expire = 600, $endpoint = '', $api_key = NULL, $api_secret = NULL) {
+  $config = pbs_media_manager_get_config();
+  $api_key = (empty($api_key)) ? $config['api_key'] : $api_key;
+  $api_secret = (empty($api_secret)) ? $config['api_secret'] : $api_secret;
+  $endpoint = (empty($endpoint)) ? $config['endpoint'] : $endpoint;
+
+  if (empty($endpoint) || empty($api_key) || empty($api_secret)) {
+    watchdog('pbs_media_manager', 'PBS Media Manager API not configured.', array(), WATCHDOG_ERROR, PBS_MEDIA_MANAGER_SETTING_URL);
+  }
+
+  if (is_array($method)) {
+    $method = implode('/', $method);
+  }
+
+  // We do this here to standardize cache key.
+  ksort($args, SORT_STRING);
+
+  if ($cache_expire) {
+    $cache_key = 'pbs_media_manager:' . md5($method . implode('-', $args));
+    $cache = cache_get($cache_key);
+  }
+
+  // Return cache if available and not expired.
+  if (!empty($cache->data) && time() < $cache->expire) {
+    return $cache->data;
+  }
+
+  // Otherwise, make a new request and cache it.
+  if (!empty($args)) {
+    $orig_args = $args;
+    $args = pbs_media_manager_validate_args($args, $method);
+    if (!$args) {
+      $export = print_r($orig_args, TRUE);
+      watchdog(
+        'pbs_media_manager',
+        'Arguments did not pass validation. %method request not sent. Args: %export',
+        array(
+          '%method' => $method,
+          '%export' => $export,
+        ),
+        WATCHDOG_ERROR
+      );
+      return FALSE;
+    }
+  }
+
+  $uri = $endpoint . $method . '/';
+  if (!empty($args)) {
+    $uri .= '?' . http_build_query($args);
+  }
+  $authorization = base64_encode($api_key . ':' . $api_secret);
+
+  $options['headers'] = array(
+    'Content-Type' => 'application/json',
+    'Authorization' => 'Basic ' . $authorization,
+  );
+
+  $response = drupal_http_request($uri, $options);
+
+  if ($response->code === '200') {
+    $response_data = json_decode($response->data);
+    if (!empty($cache_expire) && !empty($cache_key)) {
+      cache_set($cache_key, $response_data, 'cache', time() + $cache_expire);
+    }
+    return $response_data;
+  }
+  elseif ($response->code === '500') {
+    watchdog(
+      'pbs_media_manager',
+      '500 error from PBS COVE API. Request was %request. Error was %error.',
+      array(
+        '%error' => $response->error,
+        '%request' => $response->request,
+      ), WATCHDOG_ERROR);
+    return FALSE;
+  }
+  else {
+    watchdog(
+      'pbs_media_manager',
+      'Error from PBS COVE API: %error.', array(
+        '%error' => $response->error,
+      ), WATCHDOG_ERROR);
+    return FALSE;
+  }
+}
+
+/**
+ * Validate arguments to be sent to a COVE API Request.
+ *
+ * In addition to validating the arguments is also removes any blank values to
+ * avoid any upstream inconsistencies.
+ *
+ * @param array $args
+ *   The original arguments submitted to the request.
+ * @param string $method
+ *   The method being called.
+ *
+ * @return array|bool
+ *   The validated arguments or FALSE if validation fails.
+ */
+function pbs_media_manager_validate_args(array $args, $method) {
+  $clean_args = array();
+
+  if (empty($args)) {
+    return FALSE;
+  }
+
+  module_load_include('inc', 'pbs_media_manager', 'pbs_media_manager_validation');
+
+  // Check that each argument has a valid value.
+  foreach ($args as $key => $arg) {
+    if (!empty($arg)) {
+      if (_pbs_media_manager_allowed_values($key, $arg, $method)) {
+        $clean_args[$key] = $arg;
+      }
+      else {
+        return FALSE;
+      }
+    }
+  }
+
+  return $clean_args;
+
+}
