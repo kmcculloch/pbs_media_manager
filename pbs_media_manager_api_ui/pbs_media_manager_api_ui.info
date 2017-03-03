@@ -1,0 +1,5 @@
+name = PBS Media Manager API Test Interface
+description = Allows admins to run queries against the API to see what comes back.
+core = 7.x
+dependencies[] = pbs_media_manager
+package = Media

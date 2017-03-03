@@ -1,0 +1,327 @@
+<?php
+
+/**
+ * @file pbs_media_manager_api_ui.module
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function pbs_media_manager_api_ui_permission() {
+  $permissions = array();
+
+  $permissions['pbs_media_manager_api_ui'] = array(
+    'title' => t('Run COVE API tests'),
+    'description' => t('Allow user to run random queries against COVE'),
+  );
+  return $permissions;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function pbs_media_manager_api_ui_menu() {
+  $items = array();
+
+  $items['admin/config/media/pbs_media_manager/default'] = array(
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  $items['admin/config/media/pbs_media_manager/pbs_media_manager_api_ui'] = array(
+    'title' => 'Test COVE API Response',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('pbs_media_manager_api_ui_tests_form'),
+    'access arguments' => array('pbs_media_manager_api_ui'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_form().
+ *
+ * Provides the testing form to assemble requests.
+ */
+function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
+  $form['method'] = array(
+    '#type' => 'select',
+    '#title' => t('Method'),
+    '#options' => array(
+      'franchises' => t('Franchises'),
+      'shows' => t('Shows'),
+      'seasons' => t('Seasons'),
+      'collections' => t('Collections'),
+      'episodes' => t('Episodes'),
+      'specials' => t('Specials'),
+      'assets' => t('Assets'),
+    ),
+    '#description' => t('Select the main method to call'),
+  );
+
+  // Some methods accept an ID or Slug as an endpoint argument.
+  $form['id_or_slug'] = array(
+    '#type' => 'textfield',
+    '#title' => t('ID or Slug'),
+    '#description' => t('Some methods accept an ID or Slug to return a single result.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="method"]' => array(
+          array('value' => 'assets'),
+          array('value' => 'franchises'),
+          array('value' => 'collections'),
+          array('value' => 'seasons'),
+          array('value' => 'episodes'),
+          array('value' => 'specials'),
+        ),
+      ),
+      'enabled' => array(
+        ':input[name="method"]' => array(
+          array('value' => 'assets'),
+          array('value' => 'franchises'),
+          array('value' => 'collections'),
+          array('value' => 'seasons'),
+          array('value' => 'episodes'),
+          array('value' => 'specials'),
+        ),
+      ),
+    ),
+  );
+
+  // Show only the parameters that make sense with the method.
+  $form['parameters'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Filters'),
+    '#collapsible' => FALSE,
+    '#collapsed' => FALSE,
+  );
+  $form['parameters']['audience_scope'] = array(
+    '#type' => 'select',
+    '#options' => array(
+      '' => t('-None-'),
+      'national' => t('National'),
+      'local' => t('Local'),
+      'kids' => t('Kids'),
+    ),
+    '#title' => t('Audience Scope'),
+    '#description' => t('Filter by audience scope'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="method"]' => array('value' => 'shows'),
+      ),
+      'enabled' => array(
+        ':input[name="method"]' => array('value' => 'shows'),
+      ),
+    ),
+  );
+  $form['parameters']['audience'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Audience'),
+    '#description' => t('The station call sign. Required if Audience Scope is Local.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="method"]' => array('value' => 'shows'),
+        ':input[name="audience_scope"]' => array('value' => 'local'),
+      ),
+      'enabled' => array(
+        ':input[name="method"]' => array('value' => 'shows'),
+        ':input[name="audience_scope"]' => array('value' => 'local'),
+      ),
+      'required' => array(
+        ':input[name="audience_scope"]' => array('value' => 'local'),
+      ),
+    ),
+  );
+  $form['parameters']['slug'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Slug'),
+    '#description' => t('Show the resources that match the slug.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="method"]' => array(
+          'value' => 'shows',
+          'value' => 'franchises',
+        ),
+      ),
+      'enabled' => array(
+        ':input[name="method"]' => array(
+          'value' => 'shows',
+          'value' => 'franchises',
+        ),
+      ),
+    ),
+  );
+  $form['parameters']['franchise-slug'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Franchise Slug'),
+    '#description' => t('Show the resources whose franchises match the slug.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="method"]' => array('value' => 'shows'),
+      ),
+      'enabled' => array(
+        ':input[name="method"]' => array('value' => 'shows'),
+      ),
+    ),
+  );
+  $form['parameters']['franchise-id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Franchise ID'),
+    '#description' => t('Show the resources whose franchises match the ID.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="method"]' => array('value' => 'shows'),
+      ),
+      'enabled' => array(
+        ':input[name="method"]' => array('value' => 'shows'),
+      ),
+    ),
+  );
+  $form['parameters']['genre-id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Genre ID'),
+    '#description' => t('Show the resources that have this genre ID.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="method"]' => array('value' => 'shows'),
+      ),
+      'enabled' => array(
+        ':input[name="method"]' => array('value' => 'shows'),
+      ),
+    ),
+  );
+  $form['parameters']['genre-slug'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Genre Slug'),
+    '#description' => t('Show the resources that have this genre slug.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="method"]' => array('value' => 'shows'),
+      ),
+      'enabled' => array(
+        ':input[name="method"]' => array('value' => 'shows'),
+      ),
+    ),
+  );
+  $form['parameters']['page'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Page'),
+    '#description' => t('Show the resources on a specific page. Resources are returned 25 items per page, and pagination starts with 1.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="method"]' => array(
+          array('value' => 'shows'),
+          array('value' => 'franchises'),
+        ),
+      ),
+      'enabled' => array(
+        ':input[name="method"]' => array(
+          array('value' => 'shows'),
+          array('value' => 'franchises'),
+        ),
+      ),
+    ),
+  );
+  $form['parameters']['sort'] = array(
+    '#type' => 'select',
+    '#options' => array(
+      '' => t('-None-'),
+      'title_sortable' => t('Sortable Title (asc)'),
+      '-title_sortable' => t('Sortable Title (desc)'),
+      'title' => t('Title (asc)'),
+      '-title' => t('Title (desc)'),
+    ),
+    '#title' => t('Sort'),
+    '#description' => t('Sort the resources.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="method"]' => array(
+          array('value' => 'shows'),
+          array('value' => 'franchises'),
+        ),
+      ),
+      'enabled' => array(
+        ':input[name="method"]' => array(
+          array('value' => 'shows'),
+          array('value' => 'franchises'),
+        ),
+      ),
+    ),
+  );
+
+  // Use an AJAX callback to display results without refreshing the page.
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#ajax' => array(
+      'callback' => 'pbs_media_manager_api_ui_settings_form_submit_ajax_callback',
+      'wrapper' => 'box',
+      'name' => 'submit1',
+    ),
+    '#value' => t('Get response'),
+  );
+
+  // Results will be displayed here.
+  $form['box'] = array(
+    '#type' => 'markup',
+    '#prefix' => '<div id="box">',
+    '#suffix' => '</div>',
+    '#markup' => '',
+  );
+
+  return $form;
+}
+
+/**
+ * Test form submit handler for AJAX Callback.
+ *
+ * @param array $form
+ *   Form array.
+ * @param array $form_state
+ *   Submitted form state.
+ *
+ * @return array
+ *   Returns a response array.
+ */
+function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form, array &$form_state) {
+
+  $method = $form['method']['#value'];
+
+  if ($form['id_or_slug']['#value']) {
+    $method = array(
+      $form['method']['#value'],
+      $form['id_or_slug']['#value'],
+    );
+  }
+
+  $args = array();
+
+  // Filters.
+  foreach ($form['parameters'] as $label => $element) {
+    if ($label[0] != '#' && $label != 'fields') {
+      if ($element['#value']) {
+        $args[$label] = $element['#value'];
+      }
+    }
+  }
+
+  $response = pbs_media_manager_request($method, $args, $cache_expire = 0);
+
+  if (!$response) {
+    $response = t('Request failed most likely due to invalid request. Check recent log entries for more detail');
+  }
+
+  if (function_exists('dpm')) {
+    dpm($response);
+    $element = $form['box'];
+    $element['#markup'] = '<p>' . t('Request details above') . '</p>';
+  }
+  else {
+    $element = $form['box'];
+    $element['#markup'] = '<pre>' . print_r($response, TRUE) . '</pre>';
+  }
+
+  return $element;
+
+}
