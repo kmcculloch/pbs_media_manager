@@ -1,7 +1,5 @@
 <?php
 
-namespace Drupal\pbs_media_manager;
-
 /**
  * Class PbsMediaManagerRequest handles requests to media manager api.
  *
