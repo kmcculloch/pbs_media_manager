@@ -11,8 +11,8 @@ function pbs_media_manager_api_ui_permission() {
   $permissions = array();
 
   $permissions['pbs_media_manager_api_ui'] = array(
-    'title' => t('Run COVE API tests'),
-    'description' => t('Allow user to run random queries against COVE'),
+    'title' => t('Run API tests'),
+    'description' => t('Allow user to run random queries against.'),
   );
   return $permissions;
 }

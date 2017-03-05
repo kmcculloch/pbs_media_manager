@@ -9,7 +9,7 @@ define('PBS_MEDIA_MANAGER_STAGE_ENDPOINT', 'https://media-staging.services.pbs.o
 define('PBS_MEDIA_MANAGER_PRODUCTION_ENDPOINT', 'https://media.services.pbs.org/api/v1');
 
 /**
- * Settings form for Cove API.
+ * Settings form for Media Manager API.
  */
 function pbs_media_manager_admin_site_settings() {
   $form = array();
@@ -24,7 +24,7 @@ function pbs_media_manager_admin_site_settings() {
     '#default_value' => variable_get('pbs_media_manager_key'),
   );
   $form['pbs_media_manager_settings']['pbs_media_manager_secret'] = array(
-    '#title' => t('PBS COVE API Secret'),
+    '#title' => t('API Secret'),
     '#type' => 'textfield',
     '#required' => TRUE,
     '#default_value' => variable_get('pbs_media_manager_secret'),
@@ -38,21 +38,56 @@ function pbs_media_manager_admin_site_settings() {
     ),
     '#default_value' => variable_get('pbs_media_manager_endpoint', PBS_MEDIA_MANAGER_PRODUCTION_ENDPOINT),
   );
+
+  // If there are settings, allow them to be tested by getting a station list.
+  $test_disabled = empty(variable_get('pbs_media_manager_key')) || empty(variable_get('pbs_media_manager_secret'));
+  $form['pbs_media_manager_settings']['test_button'] = array(
+    '#type' => 'submit',
+    '#value' => t('Test Connection'),
+    '#disabled' => $test_disabled,
+    '#ajax' => array(
+      'callback' => '_pbs_media_manager_api_connection_test_callback',
+      'wrapper' => 'box',
+      'name' => 'submit1',
+    ),
+  );
   return system_settings_form($form);
 }
 
 /**
- * Validate the Cove API settings form.
+ * Test form submit handler for AJAX Callback.
+ *
+ * @param array $form
+ *   Form array.
+ * @param array $form_state
+ *   Submitted form state.
+ *
+ * @return array
+ *   Returns a response array.
  */
-function pbs_media_manager_admin_site_settings_validate($form, &$form_state) {
-  $values = $form_state['values'];
-  $api_key = $values['pbs_media_manager_key'];
-  $api_secret = $values['pbs_media_manager_secret'];
-  $response = pbs_media_manager_request('franchises', array('slug' => 'masterpiece'), 0, $api_key, $api_secret);
-  if (!$response) {
-    form_set_error('pbs_media_manager_settings', t('Failed to connect to Media Manager API with those credentials.'));
+function _pbs_media_manager_api_connection_test_callback(array $form, array &$form_state) {
+
+  $args = array();
+
+  // Filters.
+  foreach ($form['parameters'] as $label => $element) {
+    if ($label[0] != '#' && $label != 'fields') {
+      if ($element['#value']) {
+        $args[$label] = $element['#value'];
+      }
+    }
+  }
+
+  if (pbs_media_manager_api_connection_test()) {
+    $response = t('Connection attempt succeeded.');
   }
   else {
-    drupal_set_message(t('Successfully connected with Media Manager API. Settings have been saved.'));
+    $response = t('Connection attempt failed.');
   }
+
+  $element = $form['box'];
+  $element['#markup'] = $response;
+
+  return $element;
+
 }

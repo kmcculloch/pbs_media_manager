@@ -183,7 +183,7 @@ function pbs_media_manager_validate_args(array $args, $method) {
     return FALSE;
   }
 
-  module_load_include('inc', 'pbs_media_manager', 'pbs_media_manager_validation');
+  module_load_include('inc', 'pbs_media_manager', 'pbs_media_manager.validation');
 
   // Check that each argument has a valid value.
   foreach ($args as $key => $arg) {
@@ -198,5 +198,17 @@ function pbs_media_manager_validate_args(array $args, $method) {
   }
 
   return $clean_args;
+
+}
+
+/**
+ * Test to see if the current settings allow a connection to the API.
+ *
+ * @return bool
+ *   Returns true if the API is able to get the station list, false otherwise.
+ */
+function pbs_media_manager_api_connection_test() {
+
+  $response = pbs_media_manager_request();
 
 }
