@@ -39,6 +39,8 @@ class PbsMediaManagerResponse {
     return $this->data;
   }
 
-  public
+  public function getCompleteResponse() {
+    return $this->rawJson;
+  }
 
 }
