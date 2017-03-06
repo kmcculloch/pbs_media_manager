@@ -16,6 +16,12 @@ class PbsMediaManagerRequest {
   protected $key;
   protected $secret;
 
+  /**
+   * PbsMediaManagerRequest constructor.
+   *
+   * If there are setting already entered through the settings form they are
+   * preloaded during construction.  They can be overriden via setters.
+   */
   public function __construct() {
     $config = pbs_media_manager_get_config();
     $this->key = (empty($api_key)) ? $config['api_key'] : $api_key;
@@ -35,16 +41,43 @@ class PbsMediaManagerRequest {
     return $this;
   }
 
+  /**
+   * Sets the API key overriding whatever settings were entered.
+   *
+   * @param string $apiKey
+   *   The API key from PBS.
+   *
+   * @return $this
+   */
   public function setKey($apiKey) {
     $this->key = $apiKey;
     return $this;
   }
 
-  public function setSeceret($apiSeceret) {
-    $this->seceret = $apiSeceret;
+  /**
+   * Sets the API Secret value overriding whatever settings were entered.
+   *
+   * @param string $apiSecret
+   *   The API Secret value.
+   *
+   * @return $this
+   */
+  public function setSecret($apiSecret) {
+    $this->secret = $apiSecret;
     return $this;
   }
 
+  /**
+   * Sets the resource to retrieve.
+   *
+   * The response (assuming data is returned) will either be this type of object
+   * or a list of this type of object.
+   *
+   * @param string $resourceName
+   *   The resource name to be found in the Media Manager API.
+   *
+   * @return $this
+   */
   public function setResource($resourceName) {
     if (empty($this->mainResource)) {
       $this->mainResource($resourceName);
@@ -53,26 +86,79 @@ class PbsMediaManagerRequest {
     return $this;
   }
 
+  /**
+   * Sets the parent resource to search.
+   *
+   * If provided it will filter the list of resources being sought by this
+   * resource type. E.g if resource is Episodes and parent resource is Series it
+   * will return a list of episodes from within that series.
+   *
+   * @param string $resourceName
+   *   The name of the parent resource to search.
+   */
   public function setParentResource($resourceName) {
     $this->resource = $this->mainResource;
     $this->mainResource = $resourceName;
   }
 
+  /**
+   * Set the method you wish to call.
+   *
+   * Currently only get and list are supported, and are automatically detected
+   * based on other values.  This method if mostly for future expansion to
+   * handle create, update, and delete requests.
+   *
+   * @param string $methodName
+   *   The name of the method. Currently get or list.
+   *
+   * @return $this
+   */
   public function setMethod($methodName) {
     $this->method = strtolower($methodName);
     return $this;
   }
 
+  /**
+   * Set additional parameters.
+   *
+   * Provide an array of parameters to include in the query string of the
+   * request.
+   *
+   * @param array $parameters
+   *   Parameter list to be used in the query.
+   *
+   * @return $this
+   */
   public function setParameters(array $parameters) {
     $this->parameters = $parameters;
     return $this;
   }
 
-  public function setResourceId($resoureId) {
+  /**
+   * Sets the resource ID for get requests, or list requests with a parent.
+   *
+   * If no parent resource is set, this will force a get request of the primary
+   * resource. If a parent is sit, this will force a list request within that
+   * parent (so the ID will be assumed to be the parent resource). If not set
+   * the search will be assumed to be a list request of the primary resource.
+   *
+   * @param string $resourceId
+   *   The ID or Slug to use in the request.
+   *
+   * @return $this
+   */
+  public function setResourceId($resourceId) {
     $this->resourceId = $resourceId;
     return $this;
   }
 
+  /**
+   * Run the actual request and return a response object.
+   *
+   * @return bool|\PbsMediaManagerResponse
+   *   Returns a response object or FALSE if nothing is found.
+   *   TODO: throw an exception instead of returning FALSE on error.
+   */
   public function execute() {
 
     if (empty($this->endpoint) || empty($this->api_key) || empty($this->api_secret)) {
@@ -108,7 +194,7 @@ class PbsMediaManagerRequest {
     }
 
     // Assemble the authentication header for basic auth.
-    $authorization = base64_encode($api_key . ':' . $api_secret);
+    $authorization = base64_encode($this->key . ':' . $this->secret);
     $options['headers'] = array(
       'Content-Type' => 'application/json',
       'Authorization' => 'Basic ' . $authorization,
