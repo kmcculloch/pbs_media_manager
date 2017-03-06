@@ -30,7 +30,7 @@ function pbs_media_manager_api_ui_menu() {
   );
 
   $items['admin/config/media/pbs_media_manager/pbs_media_manager_api_ui'] = array(
-    'title' => 'Test COVE API Response',
+    'title' => 'Test API Request/Response',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('pbs_media_manager_api_ui_tests_form'),
     'access arguments' => array('pbs_media_manager_api_ui'),

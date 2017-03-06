@@ -40,7 +40,7 @@ function pbs_media_manager_menu() {
  * Gets configuration settings.
  *
  * @return array
- *   Associative array of config settings (api_key, callsign, channels).
+ *   Associative array of config settings (api_key, api_secret, endpoint).
  */
 function pbs_media_manager_get_config() {
   $config = &drupal_static(__FUNCTION__);
@@ -49,6 +49,7 @@ function pbs_media_manager_get_config() {
     $config = array(
       'api_key' => variable_get('pbs_media_manager_key'),
       'api_secret' => variable_get('pbs_media_manager_secret'),
+      'endpoint' => variable_get('pbs_media_manager_endpoint'),
     );
   }
 
@@ -58,13 +59,14 @@ function pbs_media_manager_get_config() {
 /**
  * Make a request to the PBS Core Data Model API.
  *
- * @param string|array $method
- *   The API method for the request, can be a string or array.
- *   arrays will be exploded to allow for things like
- *   '/shows/downton-abbey'.
+ * @param string $resource
+ *   The resource type to search and return.
+ * @param string $resourceID
+ *   The Resource ID or slug to run filters and searches.
+ * @param string $parentResource
+ *   The parent resource to search for a resource within.
  * @param array $args
- *   Associative array of arguments to add to the url. For example:
- *   array('frachise-slug' => 'masterpiece').
+ *   Associative array of arguments to add as the query string in the URL.
  * @param int $cache_expire
  *   The number of seconds from now to expire the cache for this request, or 0
  *   to not cache request.
@@ -76,7 +78,7 @@ function pbs_media_manager_get_config() {
  * @return object|bool
  *   Object Response data from the request
  */
-function pbs_media_manager_request($method, array $args = array(), $cache_expire = 600, $endpoint = '', $api_key = NULL, $api_secret = NULL) {
+function pbs_media_manager_request($resource, $resourceID = '', $parentResource = '', array $args = array(), $cache_expire = 600, $endpoint = '', $api_key = NULL, $api_secret = NULL) {
   $config = pbs_media_manager_get_config();
   $api_key = (empty($api_key)) ? $config['api_key'] : $api_key;
   $api_secret = (empty($api_secret)) ? $config['api_secret'] : $api_secret;
@@ -86,15 +88,12 @@ function pbs_media_manager_request($method, array $args = array(), $cache_expire
     watchdog('pbs_media_manager', 'PBS Media Manager API not configured.', array(), WATCHDOG_ERROR, PBS_MEDIA_MANAGER_SETTING_URL);
   }
 
-  if (is_array($method)) {
-    $method = implode('/', $method);
-  }
-
   // We do this here to standardize cache key.
   ksort($args, SORT_STRING);
 
   if ($cache_expire) {
-    $cache_key = 'pbs_media_manager:' . md5($method . implode('-', $args));
+    $keyable = array_merge(array($resource, $parentResource, $resourceID), $args);
+    $cache_key = 'pbs_media_manager:' . md5(implode('-', $keyable));
     $cache = cache_get($cache_key);
   }
 
@@ -104,30 +103,48 @@ function pbs_media_manager_request($method, array $args = array(), $cache_expire
   }
 
   // Otherwise, make a new request and cache it.
-  if (!empty($args)) {
-    $orig_args = $args;
-    $args = pbs_media_manager_validate_args($args, $method);
-    if (!$args) {
-      $export = print_r($orig_args, TRUE);
-      watchdog(
-        'pbs_media_manager',
-        'Arguments did not pass validation. %method request not sent. Args: %export',
-        array(
-          '%method' => $method,
-          '%export' => $export,
-        ),
-        WATCHDOG_ERROR
-      );
-      return FALSE;
-    }
+//  if (!empty($args)) {
+//    $orig_args = $args;
+//    $args = pbs_media_manager_validate_args($args, $method);
+//    if (!$args) {
+//      $export = print_r($orig_args, TRUE);
+//      watchdog(
+//        'pbs_media_manager',
+//        'Arguments did not pass validation. %method request not sent. Args: %export',
+//        array(
+//          '%method' => $resource,
+//          '%export' => $args,
+//        ),
+//        WATCHDOG_ERROR
+//      );
+//      return FALSE;
+//    }
+//  }
+
+  if ($parentResource != '') {
+    $mainResource = $parentResource;
+  }
+  else {
+    $mainResource = $resource;
   }
 
-  $uri = $endpoint . $method . '/';
+  $elements = array(
+    $endpoint,
+    $mainResource,
+    $resourceID,
+  );
+
+  if ($resource != $mainResource) {
+    $elements[] = $resource;
+  }
+
+  $uri = implode('/', $elements);
+
   if (!empty($args)) {
     $uri .= '?' . http_build_query($args);
   }
-  $authorization = base64_encode($api_key . ':' . $api_secret);
 
+  $authorization = base64_encode($api_key . ':' . $api_secret);
   $options['headers'] = array(
     'Content-Type' => 'application/json',
     'Authorization' => 'Basic ' . $authorization,
@@ -142,20 +159,11 @@ function pbs_media_manager_request($method, array $args = array(), $cache_expire
     }
     return $response_data;
   }
-  elseif ($response->code === '500') {
-    watchdog(
-      'pbs_media_manager',
-      '500 error from PBS COVE API. Request was %request. Error was %error.',
-      array(
-        '%error' => $response->error,
-        '%request' => $response->request,
-      ), WATCHDOG_ERROR);
-    return FALSE;
-  }
   else {
     watchdog(
       'pbs_media_manager',
-      'Error from PBS COVE API: %error.', array(
+      'Error from PBS API (response code: %code): %error.', array(
+        '%code' => $response->code,
         '%error' => $response->error,
       ), WATCHDOG_ERROR);
     return FALSE;
@@ -163,7 +171,7 @@ function pbs_media_manager_request($method, array $args = array(), $cache_expire
 }
 
 /**
- * Validate arguments to be sent to a COVE API Request.
+ * Validate arguments to be sent to a API Request.
  *
  * In addition to validating the arguments is also removes any blank values to
  * avoid any upstream inconsistencies.
@@ -208,7 +216,5 @@ function pbs_media_manager_validate_args(array $args, $method) {
  *   Returns true if the API is able to get the station list, false otherwise.
  */
 function pbs_media_manager_api_connection_test() {
-
-  $response = pbs_media_manager_request();
-
+  return pbs_media_manager_request($resource = 'stations', $resourceID = '', $parentResource = '', $args = array(), $cache_expire = 0) !== FALSE;
 }

@@ -51,6 +51,13 @@ function pbs_media_manager_admin_site_settings() {
       'name' => 'submit1',
     ),
   );
+  // Test results will be displayed here.
+  $form['pbs_media_manager_settings']['box'] = array(
+    '#type' => 'markup',
+    '#prefix' => '<div id="box">',
+    '#suffix' => '</div>',
+    '#markup' => '',
+  );
   return system_settings_form($form);
 }
 
@@ -67,17 +74,6 @@ function pbs_media_manager_admin_site_settings() {
  */
 function _pbs_media_manager_api_connection_test_callback(array $form, array &$form_state) {
 
-  $args = array();
-
-  // Filters.
-  foreach ($form['parameters'] as $label => $element) {
-    if ($label[0] != '#' && $label != 'fields') {
-      if ($element['#value']) {
-        $args[$label] = $element['#value'];
-      }
-    }
-  }
-
   if (pbs_media_manager_api_connection_test()) {
     $response = t('Connection attempt succeeded.');
   }
@@ -85,7 +81,7 @@ function _pbs_media_manager_api_connection_test_callback(array $form, array &$fo
     $response = t('Connection attempt failed.');
   }
 
-  $element = $form['box'];
+  $element = $form['pbs_media_manager_settings']['box'];
   $element['#markup'] = $response;
 
   return $element;
