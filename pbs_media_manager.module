@@ -216,5 +216,5 @@ function pbs_media_manager_validate_args(array $args, $method) {
  *   Returns true if the API is able to get the station list, false otherwise.
  */
 function pbs_media_manager_api_connection_test() {
-  return pbs_media_manager_request($resource = 'stations', $resourceID = '', $parentResource = '', $args = array(), $cache_expire = 0) !== FALSE;
+  return pbs_media_manager_request($resource = 'shows', $resourceID = '', $parentResource = '', $args = array(), $cache_expire = 0) !== FALSE;
 }
