@@ -164,7 +164,7 @@ class PBS_Media_Manager_API_Client {
 
   /* main constructor for getting single items 
    * asset, episode, special, collection, season, show, franchise, station */
-  public function get_item_of_type($id, $type, $private=false) {
+  public function get_item_of_type($id, $type, $private = false) {
     /* note that $id can also be a slug */
     $query = "/" . $type . "s/" . $id . "/";
     // unpublished, 'private' items have to do a GET on the update endpoint
@@ -469,4 +469,3 @@ class PBS_Media_Manager_API_Client {
   }
 
 }
-?>
