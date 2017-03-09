@@ -50,13 +50,13 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#type' => 'select',
     '#title' => t('Resource'),
     '#options' => array(
-      'franchises' => t('Franchises'),
-      'shows' => t('Shows'),
-      'seasons' => t('Seasons'),
-      'collections' => t('Collections'),
-      'episodes' => t('Episodes'),
-      'specials' => t('Specials'),
-      'assets' => t('Assets'),
+      'franchise' => t('Franchises'),
+      'show' => t('Shows'),
+      'season' => t('Seasons'),
+      'collection' => t('Collections'),
+      'episode' => t('Episodes'),
+      'special' => t('Specials'),
+      'asset' => t('Assets'),
     ),
     '#ajax' => array(
       'callback' => 'pbs_media_manager_api_ui_resource_select_change_ajax_callback',
@@ -73,32 +73,32 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#suffix' => '</div>',
     '#options' => array(
       'none' => t('None'),
-      'franchises' => t('Franchises'),
-      'shows' => t('Shows'),
-      'seasons' => t('Seasons'),
-      'collections' => t('Collections'),
-      'episodes' => t('Episodes'),
-      'specials' => t('Specials'),
-      'assets' => t('Assets'),
+      'franchise' => t('Franchises'),
+      'show' => t('Shows'),
+      'season' => t('Seasons'),
+      'collection' => t('Collections'),
+      'episode' => t('Episodes'),
+      'special' => t('Specials'),
+      'asset' => t('Assets'),
     ),
     '#description' => t('Select the parent resource to filter the main resource by.'),
     '#states' => array(
       'visible' => array(
         ':input[name="resource"]' => array(
-          array('value' => 'assets'),
-          array('value' => 'collections'),
-          array('value' => 'seasons'),
-          array('value' => 'episodes'),
-          array('value' => 'specials'),
+          array('value' => 'asset'),
+          array('value' => 'collection'),
+          array('value' => 'season'),
+          array('value' => 'episode'),
+          array('value' => 'special'),
         ),
       ),
       'enabled' => array(
         ':input[name="resource"]' => array(
-          array('value' => 'assets'),
-          array('value' => 'collections'),
-          array('value' => 'seasons'),
-          array('value' => 'episodes'),
-          array('value' => 'specials'),
+          array('value' => 'asset'),
+          array('value' => 'collection'),
+          array('value' => 'season'),
+          array('value' => 'episode'),
+          array('value' => 'special'),
         ),
       ),
     ),
@@ -113,24 +113,24 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#states' => array(
       'visible' => array(
         ':input[name="resource"]' => array(
-          array('value' => 'assets'),
-          array('value' => 'franchises'),
-          array('value' => 'collections'),
-          array('value' => 'seasons'),
-          array('value' => 'shows'),
-          array('value' => 'episodes'),
-          array('value' => 'specials'),
+          array('value' => 'asset'),
+          array('value' => 'franchise'),
+          array('value' => 'collection'),
+          array('value' => 'season'),
+          array('value' => 'show'),
+          array('value' => 'episode'),
+          array('value' => 'special'),
         ),
       ),
       'enabled' => array(
         ':input[name="resource"]' => array(
-          array('value' => 'assets'),
-          array('value' => 'shows'),
-          array('value' => 'franchises'),
-          array('value' => 'collections'),
-          array('value' => 'seasons'),
-          array('value' => 'episodes'),
-          array('value' => 'specials'),
+          array('value' => 'asset'),
+          array('value' => 'show'),
+          array('value' => 'franchise'),
+          array('value' => 'collection'),
+          array('value' => 'season'),
+          array('value' => 'episode'),
+          array('value' => 'special'),
         ),
       ),
       'required' => array(
@@ -144,12 +144,12 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
           'or',
           array(
             ':input[name="resource"]' => array(
-              array('value' => 'assets'),
-              array('value' => 'shows'),
-              array('value' => 'collections'),
-              array('value' => 'seasons'),
-              array('value' => 'episodes'),
-              array('value' => 'specials'),
+              array('value' => 'asset'),
+              array('value' => 'show'),
+              array('value' => 'collection'),
+              array('value' => 'season'),
+              array('value' => 'episode'),
+              array('value' => 'special'),
             ),
           ),
         ),
@@ -176,10 +176,10 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#description' => t('Filter by audience scope'),
     '#states' => array(
       'visible' => array(
-        ':input[name="resource"]' => array('value' => 'shows'),
+        ':input[name="resource"]' => array('value' => 'show'),
       ),
       'enabled' => array(
-        ':input[name="resource"]' => array('value' => 'shows'),
+        ':input[name="resource"]' => array('value' => 'show'),
       ),
     ),
   );
@@ -189,11 +189,11 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#description' => t('The station call sign. Required if Audience Scope is Local.'),
     '#states' => array(
       'visible' => array(
-        ':input[name="resource"]' => array('value' => 'shows'),
+        ':input[name="resource"]' => array('value' => 'show'),
         ':input[name="audience_scope"]' => array('value' => 'local'),
       ),
       'enabled' => array(
-        ':input[name="resource"]' => array('value' => 'shows'),
+        ':input[name="resource"]' => array('value' => 'show'),
         ':input[name="audience_scope"]' => array('value' => 'local'),
       ),
       'required' => array(
@@ -208,14 +208,14 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#states' => array(
       'visible' => array(
         ':input[name="resource"]' => array(
-          'value' => 'shows',
-          'value' => 'franchises',
+          'value' => 'show',
+          'value' => 'franchise',
         ),
       ),
       'enabled' => array(
         ':input[name="resource"]' => array(
-          'value' => 'shows',
-          'value' => 'franchises',
+          'value' => 'show',
+          'value' => 'franchise',
         ),
       ),
     ),
@@ -226,10 +226,10 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#description' => t('Show the resources whose franchises match the slug.'),
     '#states' => array(
       'visible' => array(
-        ':input[name="resource"]' => array('value' => 'shows'),
+        ':input[name="resource"]' => array('value' => 'show'),
       ),
       'enabled' => array(
-        ':input[name="resource"]' => array('value' => 'shows'),
+        ':input[name="resource"]' => array('value' => 'show'),
       ),
     ),
   );
@@ -239,10 +239,10 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#description' => t('Show the resources whose franchises match the ID.'),
     '#states' => array(
       'visible' => array(
-        ':input[name="resource"]' => array('value' => 'shows'),
+        ':input[name="resource"]' => array('value' => 'show'),
       ),
       'enabled' => array(
-        ':input[name="resource"]' => array('value' => 'shows'),
+        ':input[name="resource"]' => array('value' => 'show'),
       ),
     ),
   );
@@ -252,10 +252,10 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#description' => t('Show the resources that have this genre ID.'),
     '#states' => array(
       'visible' => array(
-        ':input[name="resource"]' => array('value' => 'shows'),
+        ':input[name="resource"]' => array('value' => 'show'),
       ),
       'enabled' => array(
-        ':input[name="resource"]' => array('value' => 'shows'),
+        ':input[name="resource"]' => array('value' => 'show'),
       ),
     ),
   );
@@ -265,10 +265,10 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#description' => t('Show the resources that have this genre slug.'),
     '#states' => array(
       'visible' => array(
-        ':input[name="resource"]' => array('value' => 'shows'),
+        ':input[name="resource"]' => array('value' => 'show'),
       ),
       'enabled' => array(
-        ':input[name="resource"]' => array('value' => 'shows'),
+        ':input[name="resource"]' => array('value' => 'show'),
       ),
     ),
   );
@@ -279,14 +279,14 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#states' => array(
       'visible' => array(
         ':input[name="resource"]' => array(
-          array('value' => 'shows'),
-          array('value' => 'franchises'),
+          array('value' => 'show'),
+          array('value' => 'franchise'),
         ),
       ),
       'enabled' => array(
         ':input[name="resource"]' => array(
-          array('value' => 'shows'),
-          array('value' => 'franchises'),
+          array('value' => 'show'),
+          array('value' => 'franchise'),
         ),
       ),
     ),
@@ -305,14 +305,14 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#states' => array(
       'visible' => array(
         ':input[name="resource"]' => array(
-          array('value' => 'shows'),
-          array('value' => 'franchises'),
+          array('value' => 'show'),
+          array('value' => 'franchise'),
         ),
       ),
       'enabled' => array(
         ':input[name="resource"]' => array(
-          array('value' => 'shows'),
-          array('value' => 'franchises'),
+          array('value' => 'show'),
+          array('value' => 'franchise'),
         ),
       ),
     ),
@@ -358,56 +358,56 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
   // The parent resources options are determined by the resource type.
   $options = array();
   switch ($resource) {
-    case 'assets':
+    case 'asset':
       $options = array(
-        'franchises' => t('Franchises'),
-        'shows' => t('Shows'),
-        'seasons' => t('Seasons'),
-        'episodes' => t('Episodes'),
-        'specials' => t('Specials'),
+        'franchise' => t('Franchises'),
+        'show' => t('Shows'),
+        'season' => t('Seasons'),
+        'episode' => t('Episodes'),
+        'special' => t('Specials'),
       );
       break;
 
-    case 'collections':
-      $options = array(
-        'none' => t('None'),
-        'shows' => t('Shows'),
-        'episodes' => t('Episodes'),
-        'specials' => t('Specials'),
-      );
-      break;
-
-    case 'episodes':
+    case 'collection':
       $options = array(
         'none' => t('None'),
-        'seasons' => t('Seasons'),
-        'collections' => t('Collections'),
+        'show' => t('Shows'),
+        'episode' => t('Episodes'),
+        'special' => t('Specials'),
       );
       break;
 
-    case 'franchises':
+    case 'episode':
+      $options = array(
+        'none' => t('None'),
+        'season' => t('Seasons'),
+        'collection' => t('Collections'),
+      );
+      break;
+
+    case 'franchise':
       // No parent options when Franchises are the resource.
       break;
 
-    case 'seasons':
+    case 'season':
       $options = array(
         'none' => t('None'),
-        'collections' => t('Collections'),
+        'collection' => t('Collections'),
       );
       break;
 
-    case 'shows':
+    case 'show':
       $options = array(
         'none' => t('None'),
-        'franchises' => t('Franchises'),
+        'franchise' => t('Franchises'),
       );
       break;
 
-    case 'specials':
+    case 'special':
       $options = array(
         'none' => t('None'),
-        'shows' => t('Shows'),
-        'collections' => t('Collections'),
+        'show' => t('Shows'),
+        'collection' => t('Collections'),
       );
       break;
   }
