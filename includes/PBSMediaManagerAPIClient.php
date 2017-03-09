@@ -277,6 +277,9 @@ class PBS_Media_Manager_API_Client {
 
     $result_data = array();
     $raw_result = $this->get_child_items_of_type($parent_id, $parent_type, 'asset', $queryargs);
+    if (isset($raw_result['errors'])) {
+      return $raw_result['errors'];
+    }
     foreach ($raw_result as $result) {
       // only include the right asset_types
       if (!in_array($result['attributes']['object_type'], $asset_types)) {

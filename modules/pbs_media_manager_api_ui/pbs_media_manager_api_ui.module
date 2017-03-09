@@ -393,6 +393,7 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
       $options = array(
         'none' => t('None'),
         'collection' => t('Collections'),
+        'show' => t('Shows'),
       );
       break;
 
