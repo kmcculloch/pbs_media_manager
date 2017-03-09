@@ -57,6 +57,34 @@ function pbs_media_manager_get_config() {
 }
 
 /**
+ * Return a new API Client object.
+ *
+ * @param string $api_key
+ *   API Key, if not provided pulled from settings.
+ * @param string $api_secret
+ *   API Secret, if not provided pulled from settings.
+ * @param string $endpoint
+ *   API base endpoint, if not provided pulled from settings.
+ *
+ * @return \PBS_Media_Manager_API_Client
+ *   An API client object to use for requests.
+ */
+function pbs_media_manager_get_api_client($api_key = '', $api_secret = '', $endpoint = '') {
+  $config = pbs_media_manager_get_config();
+  $api_key = (empty($api_key)) ? $config['api_key'] : $api_key;
+  $api_secret = (empty($api_secret)) ? $config['api_secret'] : $api_secret;
+  $endpoint = (empty($endpoint)) ? $config['endpoint'] : $endpoint;
+
+  if (empty($endpoint) || empty($api_key) || empty($api_secret)) {
+    watchdog('pbs_media_manager', 'PBS Media Manager API not configured.', array(), WATCHDOG_ERROR, PBS_MEDIA_MANAGER_SETTING_URL);
+  }
+
+  module_load_include('php', 'pbs_media_manager', 'includes/PBSMediaManagerAPIClient');
+
+  return new PBS_Media_Manager_API_Client($api_key, $api_secret, $endpoint);
+}
+
+/**
  * Make a request to the PBS Core Data Model API.
  *
  * @param string $resource
@@ -74,19 +102,13 @@ function pbs_media_manager_get_config() {
  *   The "API ID" from PBS (will get from config if not set).
  * @param string $api_secret
  *   The "API Secret" from PBS (will get from config if not set).
+ * @param string $endpoint
+ *   The base API Endpoint to use to get data from PBS.
  *
  * @return object|bool
  *   Object Response data from the request
  */
-function pbs_media_manager_request($resource, $resourceID = '', $parentResource = '', array $args = array(), $cache_expire = 600, $endpoint = '', $api_key = NULL, $api_secret = NULL) {
-  $config = pbs_media_manager_get_config();
-  $api_key = (empty($api_key)) ? $config['api_key'] : $api_key;
-  $api_secret = (empty($api_secret)) ? $config['api_secret'] : $api_secret;
-  $endpoint = (empty($endpoint)) ? $config['endpoint'] : $endpoint;
-
-  if (empty($endpoint) || empty($api_key) || empty($api_secret)) {
-    watchdog('pbs_media_manager', 'PBS Media Manager API not configured.', array(), WATCHDOG_ERROR, PBS_MEDIA_MANAGER_SETTING_URL);
-  }
+function pbs_media_manager_request($resource, $resourceID = '', $parentResource = '', array $args = array(), $cache_expire = 600, $api_key = NULL, $api_secret = NULL, $endpoint = '') {
 
   // We do this here to standardize cache key.
   ksort($args, SORT_STRING);
@@ -102,111 +124,23 @@ function pbs_media_manager_request($resource, $resourceID = '', $parentResource 
     return $cache->data;
   }
 
-  // Otherwise, make a new request and cache it.
-//  if (!empty($args)) {
-//    $orig_args = $args;
-//    $args = pbs_media_manager_validate_args($args, $method);
-//    if (!$args) {
-//      $export = print_r($orig_args, TRUE);
-//      watchdog(
-//        'pbs_media_manager',
-//        'Arguments did not pass validation. %method request not sent. Args: %export',
-//        array(
-//          '%method' => $resource,
-//          '%export' => $args,
-//        ),
-//        WATCHDOG_ERROR
-//      );
-//      return FALSE;
-//    }
-//  }
+  $client = pbs_media_manager_get_api_client($api_key, $api_secret, $endpoint);
 
+  // If there is a parent resource we are getting a list of child elements from
+  // a particular resource.
   if ($parentResource != '') {
-    $mainResource = $parentResource;
+    $function = 'get_' . strtolower($parentResource) . '_' . strtolower($resource) . 's';
   }
   else {
-    $mainResource = $resource;
-  }
+    $function = 'get_' . strtolower($resource);
 
-  $elements = array(
-    $endpoint,
-    $mainResource,
-    $resourceID,
-  );
-
-  if ($resource != $mainResource) {
-    $elements[] = $resource;
-  }
-
-  $uri = implode('/', $elements);
-
-  if (!empty($args)) {
-    $uri .= '?' . http_build_query($args);
-  }
-
-  $authorization = base64_encode($api_key . ':' . $api_secret);
-  $options['headers'] = array(
-    'Content-Type' => 'application/json',
-    'Authorization' => 'Basic ' . $authorization,
-  );
-
-  $response = drupal_http_request($uri, $options);
-
-  if ($response->code === '200') {
-    $response_data = json_decode($response->data);
-    if (!empty($cache_expire) && !empty($cache_key)) {
-      cache_set($cache_key, $response_data, 'cache', time() + $cache_expire);
-    }
-    return $response_data;
-  }
-  else {
-    watchdog(
-      'pbs_media_manager',
-      'Error from PBS API (response code: %code): %error.', array(
-        '%code' => $response->code,
-        '%error' => $response->error,
-      ), WATCHDOG_ERROR);
-    return FALSE;
-  }
-}
-
-/**
- * Validate arguments to be sent to a API Request.
- *
- * In addition to validating the arguments is also removes any blank values to
- * avoid any upstream inconsistencies.
- *
- * @param array $args
- *   The original arguments submitted to the request.
- * @param string $method
- *   The method being called.
- *
- * @return array|bool
- *   The validated arguments or FALSE if validation fails.
- */
-function pbs_media_manager_validate_args(array $args, $method) {
-  $clean_args = array();
-
-  if (empty($args)) {
-    return FALSE;
-  }
-
-  module_load_include('inc', 'pbs_media_manager', 'pbs_media_manager.validation');
-
-  // Check that each argument has a valid value.
-  foreach ($args as $key => $arg) {
-    if (!empty($arg)) {
-      if (_pbs_media_manager_allowed_values($key, $arg, $method)) {
-        $clean_args[$key] = $arg;
-      }
-      else {
-        return FALSE;
-      }
+    // If we're getting a list the function name is plural.
+    if (!$resourceID) {
+      $function .= 's';
     }
   }
 
-  return $clean_args;
-
+  return $client->{$function}($resourceID);
 }
 
 /**
@@ -216,5 +150,7 @@ function pbs_media_manager_validate_args(array $args, $method) {
  *   Returns true if the API is able to get the station list, false otherwise.
  */
 function pbs_media_manager_api_connection_test() {
-  return pbs_media_manager_request($resource = 'shows', $resourceID = '', $parentResource = '', $args = array(), $cache_expire = 0) !== FALSE;
+  $client = pbs_media_manager_get_api_client();
+  $response = $client->get_list_data('/shows', array('page' => 1), TRUE);
+  return isset($response['jsonapi']);
 }
