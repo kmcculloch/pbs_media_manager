@@ -5,6 +5,8 @@
  * Provides testing form and related hooks.
  */
 
+define('PBS_MEDIA_MANAGER_API_UI_TEST_URL', 'admin/config/media/pbs_media_manager/pbs_media_manager_api_ui');
+
 /**
  * Implements hook_permission().
  */
@@ -30,7 +32,7 @@ function pbs_media_manager_api_ui_menu() {
     'weight' => -10,
   );
 
-  $items['admin/config/media/pbs_media_manager/pbs_media_manager_api_ui'] = array(
+  $items[PBS_MEDIA_MANAGER_API_UI_TEST_URL] = array(
     'title' => 'Test API Request/Response',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('pbs_media_manager_api_ui_tests_form'),
@@ -48,6 +50,23 @@ function pbs_media_manager_api_ui_menu() {
  */
 function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
 
+  $formats = array(
+    'table' => t('Data Explorer'),
+    'simple' => t('Simple'),
+  );
+  if (function_exists('dpm')) {
+    $formats['dpm'] = 'dpm()';
+  }
+  $form['response_format'] = array(
+    '#type' => 'select',
+    '#title' => t('Response Format'),
+    '#options' => $formats,
+    '#default' => 'table',
+  );
+
+  $path = current_path();
+  $passed_value = str_replace(PBS_MEDIA_MANAGER_API_UI_TEST_URL, '', $path);
+
   $form['simple_search'] = array(
     '#type' => 'container',
     'link_field' => array(
@@ -57,6 +76,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
       '#attributes' => array(
         'placeholder' => t('e.g. /assets/21980fe0-f12a-4ce8-8ba9-b997cf3a5ffd/'),
       ),
+      '#default_value' => $passed_value,
     ),
     'link_button' => array(
       '#type' => 'button',
@@ -126,7 +146,6 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
       ),
     ),
   );
-
 
   // Some methods accept an ID or Slug as an endpoint argument.
   $form['id_or_slug'] = array(
@@ -352,12 +371,19 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#value' => t('Get response'),
   );
 
+  $default_markup = '';
+  if (!empty($passed_value)) {
+    $client = pbs_media_manager_get_api_client();
+    $response = $client->get_request($passed_value);
+    $default_markup = _pbs_media_manager_ui_prep_results($response, 'table');
+  }
+
   // Results will be displayed here.
   $form['box'] = array(
     '#type' => 'markup',
     '#prefix' => '<div id="box">',
     '#suffix' => '</div>',
-    '#markup' => '',
+    '#markup' => $default_markup,
   );
 
   return $form;
@@ -459,16 +485,8 @@ function pbs_media_manager_api_ui_settings_form_path_callback(array $form, array
   $client = pbs_media_manager_get_api_client();
   $response = $client->get_request($path);
 
-  if (function_exists('dpm')) {
-    dpm($response);
-    $element = $form['box'];
-    $element['#markup'] = '<p>' . t('Request details above') . '</p>';
-  }
-  else {
-    $element = $form['box'];
-    $element['#markup'] = '<pre>' . print_r($response, TRUE) . '</pre>';
-  }
-
+  $element = $form['box'];
+  $element['#markup'] = _pbs_media_manager_ui_prep_results($response, $form['response_format']['#value']);
   return $element;
 
 }
@@ -506,16 +524,68 @@ function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form
     $response = t('Request failed most likely due to invalid request. Check recent log entries for more detail');
   }
 
-  if (function_exists('dpm')) {
-    dpm($response);
-    $element = $form['box'];
-    $element['#markup'] = '<p>' . t('Request details above') . '</p>';
-  }
-  else {
-    $element = $form['box'];
-    $element['#markup'] = '<pre>' . print_r($response, TRUE) . '</pre>';
-  }
-
+  $element = $form['box'];
+  $element['#markup'] = _pbs_media_manager_ui_prep_results($response, $form['response_format']['#value']);
   return $element;
 
+}
+
+function _pbs_media_manager_ui_prep_results($response, $format) {
+
+  switch ($format) {
+    case 'dpm':
+      dpm($response);
+      return '<p>' . t('Request details above') . '</p>';
+
+    case 'table':
+      return theme('table', _pbs_media_manager_ui_results_table($response));
+
+    case 'simple':
+    default:
+      return '<pre>' . print_r($response, TRUE) . '</pre>';
+
+  }
+
+}
+
+function _pbs_media_manager_ui_results_table($raw_array) {
+  $rows = array();
+  $endpoint = variable_get('pbs_media_manager_endpoint');
+  foreach ($raw_array as $key => $row) {
+    if (is_array($row)) {
+      $data = theme('table', _pbs_media_manager_ui_results_table($row));
+    }
+    else {
+      $data = '<pre>' . $row . "</pre>";
+      // If there is an API link, create button for it.
+      if (strpos($row, $endpoint) !== FALSE) {
+        $path = str_replace($endpoint, '', $row);
+        $data .= l(t('Make API Call'), PBS_MEDIA_MANAGER_API_UI_TEST_URL . $path);
+      }
+    }
+    $rows[] = array(
+      'data' => array(
+        '0' => array(
+          'data' => array(
+            '#type' => 'markup',
+            '#markup' => $key,
+          ),
+        ),
+        '1' => array(
+          'data' => array(
+            '#type' => 'markup',
+            '#markup' => $data,
+          ),
+        ),
+      ),
+    );
+  }
+
+  $table = array(
+    'header' => array(),
+    'rows' => $rows,
+    'empty' => t('No results found'),
+  );
+
+  return $table;
 }
