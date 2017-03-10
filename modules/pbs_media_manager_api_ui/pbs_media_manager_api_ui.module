@@ -1,7 +1,8 @@
 <?php
 
 /**
- * @file pbs_media_manager_api_ui.module
+ * @file
+ * Provides testing form and related hooks.
  */
 
 /**
@@ -46,6 +47,28 @@ function pbs_media_manager_api_ui_menu() {
  * Provides the testing form to assemble requests.
  */
 function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
+
+  $form['simple_search'] = array(
+    '#type' => 'container',
+    'link_field' => array(
+      '#type' => 'textfield',
+      '#title' => t('API Path'),
+      '#description' => t('Provide the path for the request you want to run.'),
+      '#attributes' => array(
+        'placeholder' => t('e.g. /assets/21980fe0-f12a-4ce8-8ba9-b997cf3a5ffd/'),
+      ),
+    ),
+    'link_button' => array(
+      '#type' => 'button',
+      '#ajax' => array(
+        'callback' => 'pbs_media_manager_api_ui_settings_form_path_callback',
+        'wrapper' => 'box',
+        'name' => 'submit2',
+      ),
+      '#value' => t('Make Request'),
+    ),
+  );
+
   $form['resource'] = array(
     '#type' => 'select',
     '#title' => t('Resource'),
@@ -416,6 +439,38 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
   $element['#options'] = $options;
 
   return $element;
+}
+
+/**
+ * Test form submit handler for AJAX Callback.
+ *
+ * @param array $form
+ *   Form array.
+ * @param array $form_state
+ *   Submitted form state.
+ *
+ * @return array
+ *   Returns a response array.
+ */
+function pbs_media_manager_api_ui_settings_form_path_callback(array $form, array &$form_state) {
+
+  $path = $form_state['values']['link_field'];
+
+  $client = pbs_media_manager_get_api_client();
+  $response = $client->get_request($path);
+
+  if (function_exists('dpm')) {
+    dpm($response);
+    $element = $form['box'];
+    $element['#markup'] = '<p>' . t('Request details above') . '</p>';
+  }
+  else {
+    $element = $form['box'];
+    $element['#markup'] = '<pre>' . print_r($response, TRUE) . '</pre>';
+  }
+
+  return $element;
+
 }
 
 /**
