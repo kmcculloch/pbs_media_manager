@@ -1,0 +1,31 @@
+<?php
+/**
+ * @file
+ * Install, update, and uninstall functions for the PBS Media Manager player module.
+ */
+
+/**
+ * Implements hook_field_schema().
+ *
+ * Defines the database schema of the field, using the format used by the
+ * Schema API.
+ *
+ * @see http://drupal.org/node/146939
+ * @see schemaapi
+ * @see hook_field_schema()
+ */
+function pbs_media_manager_player_field_schema($field) {
+  $columns = array(
+    'object_id' => array(
+      'type' => 'varchar',
+      'not null' => FALSE,
+    ),
+  );
+  $indexes = array(
+    'object_id' => array('object_id'),
+  );
+  return array(
+    'columns' => $columns,
+    'indexes' => $indexes,
+  );
+}
