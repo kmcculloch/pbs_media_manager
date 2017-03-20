@@ -432,6 +432,7 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
   switch ($resource) {
     case 'asset':
       $options = array(
+        'none' => t('None'),
         'franchise' => t('Franchises'),
         'show' => t('Shows'),
         'season' => t('Seasons'),
