@@ -5,14 +5,15 @@
  * Provides testing form and related hooks.
  */
 
-define('PBS_MEDIA_MANAGER_API_UI_TEST_URL', 'admin/config/media/pbs_media_manager/pbs_media_manager_api_ui');
+define('PBS_MEDIA_MANAGER_API_UI_TEST_URL',
+  'admin/config/media/pbs_media_manager/pbs_media_manager_api_ui');
 
 /**
  * Implements hook_permission().
  */
 function pbs_media_manager_api_ui_permission() {
   $permissions = array();
-
+  
   $permissions['pbs_media_manager_api_ui'] = array(
     'title' => t('Run API tests'),
     'description' => t('Allow user to run random queries against.'),
@@ -25,13 +26,13 @@ function pbs_media_manager_api_ui_permission() {
  */
 function pbs_media_manager_api_ui_menu() {
   $items = array();
-
+  
   $items['admin/config/media/pbs_media_manager/default'] = array(
     'title' => 'Settings',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
-
+  
   $items[PBS_MEDIA_MANAGER_API_UI_TEST_URL] = array(
     'title' => 'Test API Request/Response',
     'page callback' => 'drupal_get_form',
@@ -39,7 +40,7 @@ function pbs_media_manager_api_ui_menu() {
     'access arguments' => array('pbs_media_manager_api_ui'),
     'type' => MENU_LOCAL_TASK,
   );
-
+  
   return $items;
 }
 
@@ -49,7 +50,7 @@ function pbs_media_manager_api_ui_menu() {
  * Provides the testing form to assemble requests.
  */
 function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
-
+  
   $formats = array(
     'table' => t('Data Explorer'),
     'simple' => t('Simple'),
@@ -63,10 +64,10 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#options' => $formats,
     '#default' => 'table',
   );
-
+  
   $path = current_path();
   $passed_value = str_replace(PBS_MEDIA_MANAGER_API_UI_TEST_URL, '', $path);
-
+  
   $form['simple_search'] = array(
     '#type' => 'container',
     'link_field' => array(
@@ -88,7 +89,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
       '#value' => t('Make Request'),
     ),
   );
-
+  
   $form['resource'] = array(
     '#type' => 'select',
     '#title' => t('Resource'),
@@ -108,7 +109,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     ),
     '#description' => t('Select the main resource to retrieve'),
   );
-
+  
   $form['parentResource'] = array(
     '#type' => 'select',
     '#title' => t('Parent Resource'),
@@ -146,7 +147,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
       ),
     ),
   );
-
+  
   // Some methods accept an ID or Slug as an endpoint argument.
   $form['id_or_slug'] = array(
     '#type' => 'textfield',
@@ -198,7 +199,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
       ),
     ),
   );
-
+  
   // Show only the parameters that make sense with the method.
   $form['parameters'] = array(
     '#type' => 'fieldset',
@@ -359,7 +360,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
       ),
     ),
   );
-
+  
   // Use an AJAX callback to display results without refreshing the page.
   $form['submit'] = array(
     '#type' => 'submit',
@@ -370,14 +371,14 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     ),
     '#value' => t('Get response'),
   );
-
+  
   $default_markup = '';
   if (!empty($passed_value)) {
     $client = pbs_media_manager_get_api_client();
     $response = $client->get_request($passed_value);
     $default_markup = _pbs_media_manager_ui_prep_results($response, 'table');
   }
-
+  
   // Results will be displayed here.
   $form['box'] = array(
     '#type' => 'markup',
@@ -385,7 +386,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     '#suffix' => '</div>',
     '#markup' => $default_markup,
   );
-
+  
   return $form;
 }
 
@@ -400,10 +401,11 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
  * @return array
  *   Returns a response array.
  */
-function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $form, array &$form_state) {
+function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $form,
+  array &$form_state) {
   $element = $form['parentResource'];
   $resource = $form_state['values']['resource'];
-
+  
   // The parent resources options are determined by the resource type.
   $options = array();
   switch ($resource) {
@@ -416,7 +418,7 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
         'special' => t('Specials'),
       );
       break;
-
+    
     case 'collection':
       $options = array(
         'none' => t('None'),
@@ -425,7 +427,7 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
         'special' => t('Specials'),
       );
       break;
-
+    
     case 'episode':
       $options = array(
         'none' => t('None'),
@@ -433,11 +435,11 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
         'collection' => t('Collections'),
       );
       break;
-
+    
     case 'franchise':
       // No parent options when Franchises are the resource.
       break;
-
+    
     case 'season':
       $options = array(
         'none' => t('None'),
@@ -445,14 +447,14 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
         'show' => t('Shows'),
       );
       break;
-
+    
     case 'show':
       $options = array(
         'none' => t('None'),
         'franchise' => t('Franchises'),
       );
       break;
-
+    
     case 'special':
       $options = array(
         'none' => t('None'),
@@ -461,9 +463,9 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
       );
       break;
   }
-
+  
   $element['#options'] = $options;
-
+  
   return $element;
 }
 
@@ -478,17 +480,19 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
  * @return array
  *   Returns a response array.
  */
-function pbs_media_manager_api_ui_settings_form_path_callback(array $form, array &$form_state) {
-
+function pbs_media_manager_api_ui_settings_form_path_callback(array $form,
+  array &$form_state) {
+  
   $path = $form_state['values']['link_field'];
-
+  
   $client = pbs_media_manager_get_api_client();
   $response = $client->get_request($path);
-
+  
   $element = $form['box'];
-  $element['#markup'] = _pbs_media_manager_ui_prep_results($response, $form['response_format']['#value']);
+  $element['#markup'] = _pbs_media_manager_ui_prep_results($response,
+    $form['response_format']['#value']);
   return $element;
-
+  
 }
 
 /**
@@ -502,12 +506,14 @@ function pbs_media_manager_api_ui_settings_form_path_callback(array $form, array
  * @return array
  *   Returns a response array.
  */
-function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form, array &$form_state) {
-
+function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form,
+  array &$form_state) {
+  
   $resource = $form['resource']['#value'];
   $resourceId = $form['id_or_slug']['#value'];
-  $parentResource = $form['parentResource']['#value'] == 'none' ? '' : $form['parentResource']['#value'];
-
+  $parentResource = $form['parentResource']['#value'] == 'none' ? '' :
+    $form['parentResource']['#value'];
+  
   // Filters.
   $args = array();
   foreach ($form['parameters'] as $label => $element) {
@@ -517,35 +523,39 @@ function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form
       }
     }
   }
-
-  $response = pbs_media_manager_request($resource, $resourceId, $parentResource, $args, $cache_expire = 600);
-
+  
+  $response =
+    pbs_media_manager_request($resource, $resourceId, $parentResource, $args,
+      $cache_expire = 600);
+  
   if (!$response) {
-    $response = t('Request failed most likely due to invalid request. Check recent log entries for more detail');
+    $response =
+      t('Request failed most likely due to invalid request. Check recent log entries for more detail');
   }
-
+  
   $element = $form['box'];
-  $element['#markup'] = _pbs_media_manager_ui_prep_results($response, $form['response_format']['#value']);
+  $element['#markup'] = _pbs_media_manager_ui_prep_results($response,
+    $form['response_format']['#value']);
   return $element;
-
+  
 }
 
 function _pbs_media_manager_ui_prep_results($response, $format) {
-
+  
   switch ($format) {
     case 'dpm':
       dpm($response);
       return '<p>' . t('Request details above') . '</p>';
-
+    
     case 'table':
       return theme('table', _pbs_media_manager_ui_results_table($response));
-
+    
     case 'simple':
     default:
       return '<pre>' . print_r($response, TRUE) . '</pre>';
-
+    
   }
-
+  
 }
 
 function _pbs_media_manager_ui_results_table($raw_array) {
@@ -560,7 +570,8 @@ function _pbs_media_manager_ui_results_table($raw_array) {
       // If there is an API link, create button for it.
       if (strpos($row, $endpoint) !== FALSE) {
         $path = str_replace($endpoint, '', $row);
-        $data .= l(t('Make API Call'), PBS_MEDIA_MANAGER_API_UI_TEST_URL . $path);
+        $data .= l(t('Make API Call'),
+          PBS_MEDIA_MANAGER_API_UI_TEST_URL . $path);
       }
     }
     $rows[] = array(
@@ -580,12 +591,12 @@ function _pbs_media_manager_ui_results_table($raw_array) {
       ),
     );
   }
-
+  
   $table = array(
     'header' => array(),
     'rows' => $rows,
     'empty' => t('No results found'),
   );
-
+  
   return $table;
 }
