@@ -101,6 +101,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
       'episode' => t('Episodes'),
       'special' => t('Specials'),
       'asset' => t('Assets'),
+      'asset_legacy' => t('Assets (Legacy)'),
     ),
     '#ajax' => array(
       'callback' => 'pbs_media_manager_api_ui_resource_select_change_ajax_callback',
@@ -146,6 +147,25 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
         ),
       ),
     ),
+  );
+  
+  $form['legacyID'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Legacy TP Media ID',
+    '#description' => t('Show the assets that use the legacy TP Media Object ID'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="resource"]' => array(
+          array('value' => 'asset_legacy'),
+        ),
+      ),
+      'enabled' => array(
+        ':input[name="resource"]' => array(
+          array('value' => 'asset_legacy'),
+        ),
+      ),
+    ),
+  
   );
   
   // Some methods accept an ID or Slug as an endpoint argument.
@@ -361,6 +381,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     ),
   );
   
+  
   // Use an AJAX callback to display results without refreshing the page.
   $form['submit'] = array(
     '#type' => 'submit',
@@ -401,8 +422,8 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
  * @return array
  *   Returns a response array.
  */
-function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $form,
-  array &$form_state) {
+function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $form, array &$form_state) {
+  
   $element = $form['parentResource'];
   $resource = $form_state['values']['resource'];
   
@@ -418,7 +439,12 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
         'special' => t('Specials'),
       );
       break;
-    
+  
+    case 'asset_legacy':
+      // No parent options when Franchises are the resource.
+      break;
+  
+  
     case 'collection':
       $options = array(
         'none' => t('None'),
@@ -464,9 +490,15 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
       break;
   }
   
-  $element['#options'] = $options;
+  if (!empty($options)) {
+    $element['#options'] = $options;
   
-  return $element;
+    return $element;
+  }
+  else {
+    return NULL;
+  }
+
 }
 
 /**
@@ -510,9 +542,14 @@ function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form
   array &$form_state) {
   
   $resource = $form['resource']['#value'];
+  if ($resource == 'asset_legacy') {
+    $resource = 'asset';
+  }
+  
   $resourceId = $form['id_or_slug']['#value'];
   $parentResource = $form['parentResource']['#value'] == 'none' ? '' :
     $form['parentResource']['#value'];
+  $legacyID = $form['legacyID']['#value'];
   
   // Filters.
   $args = array();
@@ -525,8 +562,7 @@ function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form
   }
   
   $response =
-    pbs_media_manager_request($resource, $resourceId, $parentResource, $args,
-      $cache_expire = 600);
+    pbs_media_manager_request($resource, $resourceId, $parentResource, $legacyID, $args, $cache_expire = 600);
   
   if (!$response) {
     $response =

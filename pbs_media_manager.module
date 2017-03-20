@@ -108,7 +108,7 @@ function pbs_media_manager_get_api_client($api_key = '', $api_secret = '', $endp
  * @return object|bool
  *   Object Response data from the request
  */
-function pbs_media_manager_request($resource, $resourceID = '', $parentResource = '', array $args = array(), $cache_expire = 600, $api_key = NULL, $api_secret = NULL, $endpoint = '') {
+function pbs_media_manager_request($resource, $resourceID = '', $parentResource = '', $legacyID = '', array $args = array(), $cache_expire = 600, $api_key = NULL, $api_secret = NULL, $endpoint = '') {
 
   // We do this here to standardize cache key.
   ksort($args, SORT_STRING);
@@ -125,11 +125,17 @@ function pbs_media_manager_request($resource, $resourceID = '', $parentResource 
   }
 
   $client = pbs_media_manager_get_api_client($api_key, $api_secret, $endpoint);
-
+  
+  // If there is a legacy ID, we need to use a special function.
+  if ($legacyID != '') {
+    $function = 'get_asset_by_tp_media_id';
+    $resourceID = $legacyID;
+  }
   // If there is a parent resource we are getting a list of child elements from
   // a particular resource.
-  if ($parentResource != '') {
-    $function = 'get_' . strtolower($parentResource) . '_' . strtolower($resource) . 's';
+  elseif ($parentResource != '') {
+    $function =
+    'get_' . strtolower($parentResource) . '_' . strtolower($resource) . 's';
   }
   else {
     $function = 'get_' . strtolower($resource);
