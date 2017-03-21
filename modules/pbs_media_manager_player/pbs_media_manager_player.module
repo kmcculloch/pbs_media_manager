@@ -138,8 +138,8 @@ function pbs_media_manager_player_field_formatter_view($entity_type, $entity, $f
   }
   if (isset($object_id)) {
     $args = array();
-    $resource = 'asset';
-    $resourceID = $object_id;
+    $resource = 'asset_legacy';
+    $legacyID = $object_id;
     if (isset($width)) {
       $args['w'] = $width;
     }
@@ -154,14 +154,16 @@ function pbs_media_manager_player_field_formatter_view($entity_type, $entity, $f
     }
 
     // Request the video object from PBS.
-    $response = pbs_media_manager_request($resource, $resourceID);
-
-    // TODO: Render the player, once it's returned in the response.
+    $response = pbs_media_manager_request($resource, $resourceID = NULL,
+      $parentResource = NULL, $legacyID);
+    
     // If our API key allows, use the PBS partner player.
-    if (isset($response->results[0]->partner_player)) {
+    if (isset($response['data']['attributes']['player_code'])) {
       // API responses from PBS are probably safe, but we sanitize anyway. Since
       // the embed code is an iframe, check_markup() is the only way to do it.
-      $player = check_markup($response->results[0]->partner_player, 'full_html');
+      // TODO: The check_markup() doesn't work without a full_html text format.
+      //$player = check_markup($response['data']['attributes']['player_code'], 'full_html');
+      $player = $response['data']['attributes']['player_code'];
       if (isset($player)) {
         // Assign it to the #markup of the element.
         $element[0]['#markup'] = '<br clear="all" /><div class="partner-player"><div>' . $player . '</div></div>';
@@ -221,8 +223,9 @@ function pbs_media_manager_player_element_validate($element, &$form_state) {
   if (!empty($value)) {
     // Check with PBS to make sure it's a valid object ID.
     $resource = 'asset';
-    $resourceID = $value;
-    $response = pbs_media_manager_request($resource, $resourceID);
+    $legacyID = $value;
+    $response = pbs_media_manager_request($resource, $resourceID = NULL,
+      $parentResource = NULL, $legacyID);
     // TODO: Add some actual validation once the API starts returning a player.
     /*
     if (!isset($response->results[0]->partner_player)) {
