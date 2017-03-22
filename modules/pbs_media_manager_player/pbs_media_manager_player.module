@@ -160,10 +160,11 @@ function pbs_media_manager_player_field_formatter_view($entity_type, $entity, $f
     // If our API key allows, use the PBS partner player.
     if (isset($response['data']['attributes']['player_code'])) {
       // API responses from PBS are probably safe, but we sanitize anyway. Since
-      // the embed code is an iframe, check_markup() is the only way to do it.
-      // TODO: The check_markup() doesn't work without a full_html text format.
-      //$player = check_markup($response['data']['attributes']['player_code'], 'full_html');
-      $player = $response['data']['attributes']['player_code'];
+      // the embed code is an iframe, and there is no way to know that
+      // any specific text format is available and configured to allow
+      // iframes, filter_xss() is the only way to do it.
+      $player = filter_xss($response['data']['attributes']['player_code'],
+        array('iframe'));
       if (isset($player)) {
         // Assign it to the #markup of the element.
         $element[0]['#markup'] = '<br clear="all" /><div class="partner-player"><div>' . $player . '</div></div>';
@@ -226,12 +227,10 @@ function pbs_media_manager_player_element_validate($element, &$form_state) {
     $legacyID = $value;
     $response = pbs_media_manager_request($resource, $resourceID = NULL,
       $parentResource = NULL, $legacyID);
-    // TODO: Add some actual validation once the API starts returning a player.
-    /*
-    if (!isset($response->results[0]->partner_player)) {
+    if (!isset($response['data']['attributes']['player_code'])) {
       form_error($element, t('%name is not a valid asset ID.', array('%name' => $element['#title'])));
     }
-    */
+    
     form_set_value($element, $value, $form_state);
   }
 }
