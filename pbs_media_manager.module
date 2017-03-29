@@ -137,6 +137,13 @@ function pbs_media_manager_request($resource, $resourceID = '', $parentResource 
     $function =
     'get_' . strtolower($parentResource) . '_' . strtolower($resource) . 's';
   }
+  // Changelog is a special case
+  elseif ($resource == 'changelog') {
+    $function = 'get_changelog';
+    if (!empty($args)) {
+      $resourceID = $args;
+    }
+  }
   else {
     $function = 'get_' . strtolower($resource);
 

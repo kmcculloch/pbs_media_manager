@@ -102,6 +102,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
       'special' => t('Specials'),
       'asset' => t('Assets'),
       'asset_legacy' => t('Assets (Legacy)'),
+      'changelog' => t('Changelog'),
     ),
     '#ajax' => array(
       'callback' => 'pbs_media_manager_api_ui_resource_select_change_ajax_callback',
@@ -380,7 +381,101 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
       ),
     ),
   );
+
+  $form['parameters']['since'] = array(
+    '#type' => 'select',
+    '#title' => t('Period'),
+    '#description' => t('Only retrieve records changed in a specific window.'),
+    '#options' => array(
+      'none' => t('None'),
+      '-1 hour' => t('Last Hour'),
+      '-8 hour' => t('Last Eight Hours'),
+      '-24 hour' => t('Last Day'),
+      '-48 hour' => t('Last Two Days'),
+    ),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="resource"]' => array(
+          array('value' => 'changelog'),
+        ),
+      ),
+      'enabled' => array(
+        ':input[name="resource"]' => array(
+          array('value' => 'changelog'),
+        ),
+      ),
+    ),
+  );
   
+  $form['parameters']['type'] = array(
+    '#type' => 'select',
+    '#title' => t('Type'),
+    '#options' => array(
+      'franchise' => t('Franchises'),
+      'show' => t('Shows'),
+      'season' => t('Seasons'),
+      'collection' => t('Collections'),
+      'episode' => t('Episodes'),
+      'special' => t('Specials'),
+      'asset' => t('Assets'),
+    ),
+    '#multiple' => TRUE,
+    '#description' => t('Select the type of resource to filter by.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="resource"]' => array(
+          array('value' => 'changelog'),
+        ),
+      ),
+      'enabled' => array(
+        ':input[name="resource"]' => array(
+          array('value' => 'changelog'),
+        ),
+      ),
+    ),
+  );
+  
+  $form['parameters']['action'] = array(
+    '#type' => 'select',
+    '#title' => t('Action'),
+    '#options' => array(
+      'create' => t('Create'),
+      'update' => t('Update'),
+      'delete' => t('Delete'),
+    ),
+    '#multiple' => TRUE,
+    '#description' => t('Select the type of resource to filter by.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="resource"]' => array(
+          array('value' => 'changelog'),
+        ),
+      ),
+      'enabled' => array(
+        ':input[name="resource"]' => array(
+          array('value' => 'changelog'),
+        ),
+      ),
+    ),
+  );
+  
+  $form['parameters']['id'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Resource ID'),
+    '#description' => t('Filter by Resource ID. Separate multiple IDs with commas.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="resource"]' => array(
+          array('value' => 'changelog'),
+        ),
+      ),
+      'enabled' => array(
+        ':input[name="resource"]' => array(
+          array('value' => 'changelog'),
+        ),
+      ),
+    ),
+  );
   
   // Use an AJAX callback to display results without refreshing the page.
   $form['submit'] = array(
@@ -552,6 +647,23 @@ function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form
     $form['parentResource']['#value'];
   $legacyID = $form['legacyID']['#value'];
   
+  if ($resource == 'changelog') {
+    if ($form['parameters']['since']['#value'] == 'none') {
+      $form['parameters']['since']['#value'] = '';
+    }
+    else {
+      // The API is expecting the since parameter to be in %Y-%m-%dT%H:%M:%S
+      // format.
+      $timezone = new DateTimeZone('UTC');
+      $period = $form['parameters']['since']['#value'];
+      $datetime = new DateTime($period, $timezone );
+      $form['parameters']['since']['#value'] = $datetime->format('Y-m-d\TH:i:s.u\Z');
+      
+    }
+    
+    // TODO: Manipulate the type, action, and id parameters to match expected
+    // format.
+  }
   // Filters.
   $args = array();
   foreach ($form['parameters'] as $label => $element) {
