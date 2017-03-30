@@ -408,7 +408,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
   );
   
   $form['parameters']['type'] = array(
-    '#type' => 'select',
+    '#type' => 'checkboxes',
     '#title' => t('Type'),
     '#options' => array(
       'franchise' => t('Franchises'),
@@ -420,7 +420,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
       'asset' => t('Assets'),
     ),
     '#multiple' => TRUE,
-    '#description' => t('Select the type of resource to filter by.'),
+    '#description' => t('Select the resource type(s) to filter by.'),
     '#states' => array(
       'visible' => array(
         ':input[name="resource"]' => array(
@@ -660,9 +660,33 @@ function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form
       $form['parameters']['since']['#value'] = $datetime->format('Y-m-d\TH:i:s.u\Z');
       
     }
+  
+    // TODO: Manipulate the type, action, and id parameters.
+    // TODO: How to allow for duplicate args?
+    /*
+    if ($form['parameters']['type']['#value']) {
+      // TODO: This doesn't work.
+      // The API is expecting multiple values to reuse the 'type' parameter.
+      
+      // Reindex the array so that we can iterate through it.
+      $types = array_values($form['parameters']['type']['#value']);
+      
+      // Set the first type parameter as a string.
+      $form['parameters']['type']['#value'] = $types[0];
+      
+      // If there are additional types, add them to the parameter.
+      if (count($types) > 1) {
+        foreach ($types as $i => $type) {
+          // skip the first item and add the additional ones
+          if ($i) {
+            $form['parameters']['type']['#value'] .= '&type=' . $type;
+          }
+        }
+      }
+    }
+    */
     
-    // TODO: Manipulate the type, action, and id parameters to match expected
-    // format.
+
   }
   // Filters.
   $args = array();
