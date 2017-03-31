@@ -198,6 +198,9 @@ class PBS_Media_Manager_API_Client {
       $querystring = !empty($args) ? "?" . http_build_query($args) : "";
       // PBS's endpoints don't like colons to be encoded
       $querystring = str_replace("%3A", ":", $querystring);
+      // TODO: Is adding these two str_replaces acceptable?
+      $querystring = str_replace("%3D", "=", $querystring);
+      $querystring = str_replace("%26", "&", $querystring);
       $rawdata = $this->get_request($endpoint . $querystring);
       if (empty($rawdata['data'])) {
         return $rawdata;
@@ -332,6 +335,7 @@ class PBS_Media_Manager_API_Client {
      * type (episode|asset|etc), action(updated|deleted), id,
      * since (timestamp in %Y-%m-%dT%H:%M:%S format)
      * all can be combined and multiple except 'since' */
+    dpm($args, 'client args');
     if (empty($args['since'])) {
       // default 'since' to be in the last 8hrs
       $timezone = new DateTimeZone('UTC');

@@ -436,7 +436,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
   );
   
   $form['parameters']['action'] = array(
-    '#type' => 'select',
+    '#type' => 'checkboxes',
     '#title' => t('Action'),
     '#options' => array(
       'create' => t('Create'),
@@ -444,7 +444,7 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
       'delete' => t('Delete'),
     ),
     '#multiple' => TRUE,
-    '#description' => t('Select the type of resource to filter by.'),
+    '#description' => t('Select the action to filter by.'),
     '#states' => array(
       'visible' => array(
         ':input[name="resource"]' => array(
@@ -660,31 +660,47 @@ function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form
       $form['parameters']['since']['#value'] = $datetime->format('Y-m-d\TH:i:s.u\Z');
       
     }
+    
+    // The API is expecting multiple values to reuse the 'type', 'action, and
+    // id parameters.
+    $changelog_options = array('type', 'action');
+    
+    // IDs are entered free-form. If there is more than one, we need to convert
+    // the comma-separated list into an array.
+    if ($form['parameters']['id']['#value']) {
+      if (strpos($form['parameters']['id']['#value'], ',')) {
+        $form['parameters']['id']['#value'] =
+          explode(',', $form['parameters']['id']['#value']);
+        $changelog_options[] = 'id';
+      }
+    }
+
+    foreach ($changelog_options as $option) {
   
-    // TODO: Manipulate the type, action, and id parameters.
-    // TODO: How to allow for duplicate args?
-    /*
-    if ($form['parameters']['type']['#value']) {
-      // TODO: This doesn't work.
-      // The API is expecting multiple values to reuse the 'type' parameter.
-      
-      // Reindex the array so that we can iterate through it.
-      $types = array_values($form['parameters']['type']['#value']);
-      
-      // Set the first type parameter as a string.
-      $form['parameters']['type']['#value'] = $types[0];
-      
-      // If there are additional types, add them to the parameter.
-      if (count($types) > 1) {
-        foreach ($types as $i => $type) {
-          // skip the first item and add the additional ones
-          if ($i) {
-            $form['parameters']['type']['#value'] .= '&type=' . $type;
+      if ($form['parameters'][$option]['#value']) {
+        // TODO: This doesn't work without editing the API Client. Is that
+        // acceptable?
+    
+        // Reindex the array so that we can iterate through it.
+        $values = array_values($form['parameters'][$option]['#value']);
+    
+        // Set the first type parameter as a string.
+        $form['parameters'][$option]['#value'] = $values[0];
+    
+        // If there are additional types, add them to the parameter.
+        if (count($values) > 1) {
+          foreach ($values as $i => $item) {
+            // Skip the first item and add the additional ones, trimming any
+            // extra spaces.
+            if ($i) {
+              $form['parameters'][$option]['#value'] .= '&' . $option . '=' .
+                trim($item);
+            }
           }
         }
       }
     }
-    */
+    
     
 
   }
