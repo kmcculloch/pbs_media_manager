@@ -335,7 +335,6 @@ class PBS_Media_Manager_API_Client {
      * type (episode|asset|etc), action(updated|deleted), id,
      * since (timestamp in %Y-%m-%dT%H:%M:%S format)
      * all can be combined and multiple except 'since' */
-    dpm($args, 'client args');
     if (empty($args['since'])) {
       // default 'since' to be in the last 8hrs
       $timezone = new DateTimeZone('UTC');
