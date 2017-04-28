@@ -16,7 +16,7 @@ function pbs_media_manager_player_field_info() {
     'pbs_media' => array(
       'label' => t('PBS Media'),
       'description' => t('Stores a video accessible through the PBS Media Manager API.'),
-      'default_widget' => 'pbs_object_id',
+      'default_widget' => 'pbs_media_id',
       'default_formatter' => 'pbs_media_manager_player_formatter',
     ),
   );
@@ -192,7 +192,7 @@ function pbs_media_manager_player_field_formatter_view($entity_type, $entity, $f
  */
 function pbs_media_manager_player_field_widget_info() {
   return array(
-    'pbs_object_id' => array(
+    'pbs_media_id' => array(
       'label' => t('PBS Object ID'),
       'field types' => array('pbs_media'),
     ),
