@@ -8,12 +8,30 @@
  * an embedded video player.
  */
 
+
+/**
+ * Implements hook_menu().
+ */
+function pbs_media_manager_player_menu() {
+  $items = array();
+  
+  $items['admin/config/media/pbs_media_manager/migrate_test'] = array(
+    'title' => 'Migrate Tests',
+    'file' => 'pbs_media_manager_player.inc',
+    'page callback' => array('pbs_media_manager_migrate_test'),
+    'access arguments' => array('administer pbs_media_manager'),
+  );
+  
+  return $items;
+}
+
+
 /**
  * Implements hook_field_info().
  */
 function pbs_media_manager_player_field_info() {
   $return = array(
-    'pbs_media' => array(
+    'pbs_video' => array(
       'label' => t('PBS Media'),
       'description' => t('Stores a video accessible through the PBS Media Manager API.'),
       'default_widget' => 'pbs_media_id',
@@ -62,7 +80,7 @@ function pbs_media_manager_player_field_formatter_info() {
   return array(
     'pbs_media_manager_player_formatter' => array(
       'label' => t('PBS Media Player'),
-      'field types' => array('pbs_media'),
+      'field types' => array('pbs_video'),
       'settings' => array(
         'width' => 512,
         'height' => 288,
@@ -194,7 +212,7 @@ function pbs_media_manager_player_field_widget_info() {
   return array(
     'pbs_media_id' => array(
       'label' => t('PBS Object ID'),
-      'field types' => array('pbs_media'),
+      'field types' => array('pbs_video'),
     ),
   );
 }
