@@ -17,8 +17,8 @@
 function pbs_media_manager_player_field_schema($field) {
   $columns = array(
     'object_id' => array(
-      'type' => 'varchar',
-      'length' => 255,
+      'type' => 'int',
+      'size' => 'big',
       'not null' => FALSE,
     ),
   );

@@ -15,10 +15,11 @@
  * Implements hook_menu().
  */
 function pbs_media_manager_player_menu() {
-  
+
   if (empty(_pbs_media_manager_player_find_cove_fields())) {
     return array();
   }
+  
 
   $items = array();
 
@@ -35,13 +36,6 @@ function pbs_media_manager_player_menu() {
     'access arguments' => array('administer pbs_media_manager'),
     'file' => 'pbs_media_manager_player.admin.inc',
     'type' => MENU_LOCAL_TASK,
-  );
-  
-  $items['admin/config/media/pbs_media_manager/migrate_test'] = array(
-    'title' => 'Migrate Tests',
-    'file' => 'pbs_media_manager_player.inc',
-    'page callback' => array('pbs_media_manager_migrate_test'),
-    'access arguments' => array('administer pbs_media_manager'),
   );
 
   return $items;
@@ -288,7 +282,7 @@ function _pbs_media_manager_player_find_cove_fields() {
     'module' => 'cove_api_player',
     'type' => 'pbs_video',
   );
-
+  
   return field_read_fields($params, $include_additional);
 
 }
