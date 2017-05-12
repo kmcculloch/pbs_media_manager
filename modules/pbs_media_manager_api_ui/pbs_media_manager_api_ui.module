@@ -209,7 +209,6 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
           array(
             ':input[name="resource"]' => array(
               array('value' => 'asset'),
-              array('value' => 'show'),
               array('value' => 'collection'),
               array('value' => 'season'),
               array('value' => 'episode'),
@@ -273,13 +272,11 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
       'visible' => array(
         ':input[name="resource"]' => array(
           'value' => 'show',
-          'value' => 'franchise',
         ),
       ),
       'enabled' => array(
         ':input[name="resource"]' => array(
           'value' => 'show',
-          'value' => 'franchise',
         ),
       ),
     ),
@@ -786,6 +783,6 @@ function _pbs_media_manager_ui_results_table($raw_array) {
     'rows' => $rows,
     'empty' => t('No results found'),
   );
-  
+
   return $table;
 }
