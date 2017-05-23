@@ -1,0 +1,131 @@
+<?php
+
+/**
+ * @file
+ * Defines the schema for Program entity and field.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function pbs_media_manager_program_schema() {
+  $schema['pbs_media_manager_programs'] = array(
+    'description' => 'The base table for the pbs_media_manager program entity',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Primary key for pbs_media_manager program',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => "Program Title",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'pbs_media_manager_show_id' => array(
+        'description' => 'The internal ID for follow up queries',
+        'type' => 'varchar',
+        'length' => 40,
+        'not null' => TRUE,
+      ),
+      'link' => array(
+        'description' => "Program web site",
+        'type' => 'varchar',
+        'length' => 2083,
+        'not null' => FALSE,
+      ),
+      'resource_uri' => array(
+        'description' => "pbs_media_manager's internal URI",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'slug' => array(
+        'description' => 'Program Slug.',
+        'type' => 'text',
+        'length' => '1024',
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'nola_root' => array(
+        'description' => 'Program nola root.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'short_description' => array(
+        'description' => 'Short Program description.',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'long_description' => array(
+        'description' => 'Full Program description.',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'images' => array(
+        'description' => 'Stores serilaized references to show images.',
+        'type' => 'blob',
+        'size' => 'normal',
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+    ),
+    'indexes' => array(
+      'idx_title' => array('title'),
+    ),
+    'unique keys' => array(
+      'resource_uri' => array('resource_uri'),
+      'pbs_media_manager_show_id' => array('pbs_media_manager_show_id'),
+    ),
+    'primary key' => array('id'),
+  );
+  return $schema;
+}
+
+/**
+ * Implements hook_field_schema().
+ *
+ * Defines the database schema of the field, using the format used by the
+ * Schema API.
+ *
+ * @see http://drupal.org/node/146939
+ * @see schemaapi
+ * @see hook_field_schema()
+ *
+ * @ingroup field_example
+ */
+function pbs_media_manager_program_field_schema($field) {
+  $columns = array(
+    'program_entity_id' => array(
+      'type' => 'int',
+      'size' => 'big',
+      'not null' => FALSE,
+    ),
+  );
+  $indexes = array(
+    'program_entity_id' => array('program_entity_id'),
+  );
+  return array(
+    'columns' => $columns,
+    'indexes' => $indexes,
+  );
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function pbs_media_manager_program_uninstall() {
+  variable_del('pbs_media_manager_program_import_filters');
+  variable_del('pbs_media_manager_program_importer_last_count');
+  variable_del('pbs_media_manager_program_run_cron');
+  variable_del('pbs_media_manager_program_cron_frequency');
+  variable_del('pbs_media_manager_program_cron_last');
+}

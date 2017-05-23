@@ -1,0 +1,466 @@
+<?php
+
+/**
+ * @file
+ * The pbs_media_manager_program.module file.
+ */
+
+define('PBS_MEDIA_MANAGER_PROGRAM_MENU_AUTOCOMPLETE', 'pbs_media_manager_program/program_lookup/unique_pbs_media_manager_program_autocomplete_callback');
+define('PBS_MEDIA_MANAGER_PROGRAM_MENU_CONFIG', 'admin/config/media/pbs_programs');
+define('PBS_MEDIA_MANAGER_PROGRAM_MENU_IMPORT', 'admin/config/media/pbs_programs/import');
+
+/**
+ * Implements hook_menu().
+ */
+function pbs_media_manager_program_menu() {
+  $items = array();
+
+  $items[PBS_MEDIA_MANAGER_PROGRAM_MENU_CONFIG] = array(
+    'title' => 'PBS Program Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'description' => 'Settings for the pbs_media_manager Program entity module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('pbs_media_manager_program_admin_form'),
+    'access arguments' => array('administer_pbs_media_manager_programs'),
+    'file' => 'pbs_media_manager_program.admin.inc',
+  );
+  $items[PBS_MEDIA_MANAGER_PROGRAM_MENU_IMPORT] = array(
+    'title' => 'PBS Program Import',
+    'type' => MENU_LOCAL_TASK,
+    'description' => 'Import a list of programs avialable through the pbs_media_manager API.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('pbs_media_manager_program_importer_form'),
+    'access arguments' => array('administer_pbs_media_manager_programs'),
+    'file' => 'pbs_media_manager_program.admin.inc',
+  );
+  $items[PBS_MEDIA_MANAGER_PROGRAM_MENU_AUTOCOMPLETE] = array(
+    'page callback' => 'pbs_media_manager_program_widget_autocomplete',
+    'file' => 'pbs_media_manager_program.admin.inc',
+    'type' => MENU_CALLBACK,
+    'access arguments' => array('administer_pbs_media_manager_programs'),
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function pbs_media_manager_program_permission() {
+  $permissions = array();
+
+  $permissions['administer_pbs_media_manager_programs'] = array(
+    'title' => t('Administer pbs_media_manager Programs'),
+    'description' => t('Change settings and manually trigger bulk imports.'),
+  );
+  $permissions['view_pbs_media_manager_programs'] = array(
+    'title' => t('View pbs_media_manager Program data'),
+    'description' => t('Allows basic PBS program data use.'),
+  );
+  return $permissions;
+}
+
+/**
+ * Provides access callback for Program entities.
+ *
+ * @param string $op
+ *   The operation being performed on the entity.
+ * @param object|null $program
+ *   The program entity.
+ * @param object|null $account
+ *   The user performing the action.
+ *
+ * @return bool
+ *   True of the op is allowed.
+ */
+function pbs_media_manager_program_access_callback($op, $program = NULL, $account = NULL) {
+  if ($op == 'view' && (user_access('view_pbs_media_manager_programs', $account) || user_access('view_pbs_media_manager_programs', $account))) {
+    return TRUE;
+  }
+  elseif (($op == 'update' || $op == 'create' || $op == 'delete') && user_access('administer_pbs_media_manager_programs', $account)) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Implements hook_entity_info().
+ *
+ * Defines the pbs_media_manager program entity.
+ */
+function pbs_media_manager_program_entity_info() {
+  $return = array(
+    'pbs_media_manager_program' => array(
+      'label' => t('pbs_media_manager Program'),
+      'base table' => 'pbs_media_manager_programs',
+      'entity class' => 'PbsMediaProgramEntity',
+      'controller class' => 'PbsMediaProgramEntityController',
+      'module' => 'pbs_media_manager_program',
+      'access callback' => 'pbs_media_manager_program_access_callback',
+      'uri callback' => 'entity_class_uri',
+      'fieldable' => FALSE,
+      'views controller class' => 'EntityDefaultViewsController',
+      'entity keys' => array(
+        'id' => 'id',
+        'label' => 'title',
+      ),
+    ),
+  );
+  return $return;
+}
+
+/**
+ * Implements hook_field_info().
+ *
+ * Defines the pbs_media_manager reference field.
+ */
+function pbs_media_manager_program_field_info() {
+  $return = array(
+    'pbs_media_manager_program_reference' => array(
+      'label' => t('PBS Program Reference'),
+      'description' => t('This field creates a reference to a pbs_media_manager Program entity.'),
+      'default_widget' => 'pbs_media_manager_program_id',
+      'default_formatter' => 'pbs_media_manager_program_field_formatter',
+    ),
+  );
+  return $return;
+}
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function pbs_media_manager_program_field_widget_info() {
+  $return = array(
+    'pbs_media_manager_program_id' => array(
+      'label' => t('PBS Program ID (autocomplete)'),
+      'field types' => array('pbs_media_manager_program_reference'),
+    ),
+  );
+  return $return;
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ *
+ * Provides the display widget.
+ */
+function pbs_media_manager_program_field_formatter_info() {
+  return array(
+    'pbs_media_manager_program_field_formatter' => array(
+      'label' => t('PBS Program Default Display'),
+      'field types' => array('pbs_media_manager_program_reference'),
+      'settings' => array(
+        'image_preset' => 'show-mezzanine16x9',
+        'image_width' => 160,
+        'image_height' => 90,
+        'include_description' => 1,
+        'include_title' => 1,
+        'include_make_link' => 1,
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function pbs_media_manager_program_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+
+  // If this field already has a value, we need to grab the title to make it
+  // match user expectations.
+  $value = '';
+  if (!empty($items[$delta]['program_entity_id'])) {
+    $title = db_select('pbs_media_manager_programs', 'p')
+      ->fields('p', array('title'))
+      ->condition('id', $items[$delta]['program_entity_id'])
+      ->range(0, 1)
+      ->execute()
+      ->fetchField();
+    if ($title) {
+      $value = $title . "[" . $items[$delta]['program_entity_id'] . ']';
+    }
+  }
+
+  $element['program_entity_id'] = array(
+    '#title' => t('PBS Program'),
+    '#description' => t('Enter the title of the program you are referencing'),
+    '#type' => 'textfield',
+    '#autocomplete_path' => PBS_MEDIA_MANAGER_PROGRAM_MENU_AUTOCOMPLETE,
+    '#size' => 20,
+    '#default_value' => $value,
+  );
+  return $element;
+}
+
+/**
+ * Implements hook_field_validate().
+ */
+function pbs_media_manager_program_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+
+  foreach ($items as $delta => $item) {
+    if (!empty($item['program_entity_id'])) {
+      // Extract the ID from the value:
+      $matches = array();
+      $result = preg_match('/\[([0-9]+)\]$/', $item['program_entity_id'], $matches);
+      if ($result > 0) {
+
+        $prog_id = $matches[$result];
+        $program = entity_load('pbs_media_manager_program', array($prog_id));
+        if (empty($program) || count($program) != 1) {
+          $errors[$field['field_name']][$langcode][$delta][] = array(
+            'error' => 'pbs_media_manager_program_invalid',
+            'message' => t('Invalid Program ID'),
+          );
+          return;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_field_presave().
+ */
+function pbs_media_manager_program_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  if ($field['type'] == 'pbs_media_manager_program_reference') {
+    foreach ($items as $delta => $item) {
+      if (!empty($item['program_entity_id'])) {
+        // Extract the ID from the value:
+        $matches = array();
+        $result = preg_match('/\[([0-9]+)\]$/', $item['program_entity_id'], $matches);
+        if ($result > 0) {
+
+          $prog_id = $matches[$result];
+          $program = entity_load('pbs_media_manager_program', array($prog_id));
+          if (count($program)) {
+            $items[$delta]['program_entity_id'] = $prog_id;
+          }
+          else {
+            // This should not happen.
+            $items[$delta]['program_entity_id'] = 0;
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function pbs_media_manager_program_field_is_empty($item, $field) {
+  if (empty($item['program_entity_id']) && (string) $item['program_entity_id'] !== '0') {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ *
+ * Provides a few settings on the display widget.
+ */
+function pbs_media_manager_program_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  // Settings are stored in the display mode.
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+  $element = array();
+  $element['image_preset'] = array(
+    '#type'           => 'select',
+    '#options'        => array(
+      '' => t('-None-'),
+      'show-mezzanine16x9' => t('Mezzanine'),
+      'show-logo' => t('Logo'),
+      'show-poster2x3' => t('Poster 2x3'),
+      'show-banner' => t('Banner'),
+      'show-case' => t('Showcase'),
+      'show-white-logo' => t('Logo - White'),
+      'show-black-logo' => t('Logo - Black'),
+    ),
+    '#title'          => t('Image Size'),
+    '#description'    => t('Pick default image size from PBS defined options (not all shows have all images styles generated).'),
+    '#default_value'  => $settings['image_preset'],
+    '#suffix'         => '<br>',
+  );
+  $element['markup'] = array(
+    '#markup'         => t("Images can be scaled down by PBS's image server. Original Dimensions are preserved."),
+  );
+  $element['image_width'] = array(
+    '#type'           => 'textfield',
+    '#title'          => t('Width:'),
+    '#size'           => 10,
+    '#maxlength'      => 10,
+    '#default_value'  => $settings['image_width'],
+  );
+  $element['image_height'] = array(
+    '#type'           => 'textfield',
+    '#title'          => t('Height:'),
+    '#size'           => 10,
+    '#maxlength'      => 10,
+    '#default_value'  => $settings['image_height'],
+  );
+  $element['include_description'] = array(
+    '#type'           => 'checkbox',
+    '#title'          => t('Show Description?'),
+    '#default_value'  => $settings['include_description'],
+  );
+  $element['include_title'] = array(
+    '#type'           => 'checkbox',
+    '#title'          => t('Show Title?'),
+    '#default_value'  => $settings['include_title'],
+  );
+  $element['include_make_link'] = array(
+    '#type'           => 'checkbox',
+    '#title'          => t('Make output a link to program page?'),
+    '#default_value'  => $settings['include_make_link'],
+  );
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ *
+ * Provides a summary if current settings.
+ */
+function pbs_media_manager_program_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $summary = t('Show program with @img (@w x @h) and: @desc, @title, @link', array(
+    '@img'     => $settings['image_preset'],
+    '@w'     => $settings['image_width'],
+    '@h'     => $settings['image_height'],
+    '@desc'  => $settings['include_description'] ? t('description') : t('no description'),
+    '@title'  => $settings['include_title'] ? t('title') : t('no title'),
+    '@link'  => $settings['include_make_link'] ? t('as link') : t('no link'),
+  ));
+  return $summary;
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function pbs_media_manager_program_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  $settings = $display['settings'];
+
+  $pbs_media_manager_base_url = variable_get('pbs_media_manager_program_base_url', 'http://video.pbs.org');
+
+  switch ($display['type']) {
+    case 'pbs_media_manager_program_field_formatter':
+      foreach ($items as $delta => $item) {
+        $entities = entity_load('pbs_media_manager_program', array($item['program_entity_id']));
+        $entity = array_pop($entities);
+        $img_url = '';
+
+        // Find image if preset available.
+        if (!empty($entity->images)) {
+          foreach ($entity->images as $image) {
+            if ($image['profile'] == $settings['image_preset']) {
+              $img_url = $image['image'];
+              if ($settings['image_width'] && $settings['image_height']) {
+                $list = explode('.', $img_url);
+                $extension = end($list);
+                $img_url .= '.resize.' . $settings['image_width'] . 'x' . $settings['image_height'] . '.' . $extension;
+              }
+              break;
+            }
+          }
+        }
+
+        $element[$delta] = array(
+          '#theme' => 'pbs_media_manager_program_field',
+          'image_url' => $img_url,
+          'description' => $settings['include_description'] ? $entity->short_description : NULL,
+          'title' => $settings['include_title'] ? $entity->title : NULL,
+          'make_link' => $settings['include_make_link'] ,
+          'link' => $pbs_media_manager_base_url . '/program/' . $entity->slug . "/",
+        );
+      }
+      break;
+
+    default:
+      break;
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function pbs_media_manager_program_theme($existing, $type, $theme, $path) {
+  return array(
+    'pbs_media_manager_program_field' => array(
+      'path' => drupal_get_path('module', 'pbs_media_manager_program') . '/templates',
+      'template' => 'pbs_media_manager_program_field',
+      'render element' => 'pbs_media_manager_program',
+    ),
+  );
+}
+
+/**
+ * Implements hook_cron().
+ */
+function pbs_media_manager_program_cron() {
+  // The default on the form is TRUE, but FALSE here in case cron fires
+  // before the set is complete.
+  if (variable_get('pbs_media_manager_program_run_cron', FALSE)) {
+    $last_run = variable_get('pbs_media_manager_program_cron_last', 0);
+    $wait_time = (int) variable_get('pbs_media_manager_program_cron_frequency', 120) * 60;
+    if (time() - $last_run >= $wait_time) {
+      // Cron is on, and we've waited long enough.
+      watchdog('pbs_media_manager_program', 'Running pbs_media_manager Program updater process', array(), WATCHDOG_INFO);
+
+      // Update last run time stamp now in case we time out.
+      variable_set('pbs_media_manager_program_cron_last', time());
+
+      // Get the functions for handling.
+      module_load_include('inc', 'pbs_media_manager_program', 'pbs_media_manager_program.admin');
+
+      // Prepare the default show filters.
+      $defaults = array(
+        'limit' => -1,
+        'parameters' => array(
+          'audience-scope' => '',
+          'audience' => '',
+          'slug' => '',
+          'franchise-slug' => '',
+          'genre-slug' => '',
+          'franchise-id' => '',
+          'genre-id' => '',
+          'page' => 0,
+          'sort' => '',
+        ),
+      );
+
+      $saved_filters = variable_get('pbs_media_manager_program_import_filters', $defaults);
+
+      // Convert saved_filters back to arguments.
+      $args = array();
+      foreach ($saved_filters['parameters'] as $label => $value) {
+        if ($value != '') {
+          $args[$label] = $value;
+        }
+      }
+
+      $response = pbs_media_manager_request('show', '', '', '', $args, $cache_expire = 0);
+
+      if (!$response || !empty($response['errors'])) {
+        watchdog('pbs_media_manager_program', 'Failed to get a response from pbs_media_manager, update failed', array(), WATCHDOG_ERROR);
+        return;
+      }
+
+      // TODO: refactor to use queue or other less risky structure.
+      foreach ($response as $idx => $raw_prog) {
+        $useless = array();
+        pbs_media_manager_program_importer_batch_operation($raw_prog, $useless);
+      }
+
+      watchdog('pbs_media_manager_program', 'pbs_media_manager program list updated.', array(), WATCHDOG_NOTICE);
+
+    }
+  }
+
+}
