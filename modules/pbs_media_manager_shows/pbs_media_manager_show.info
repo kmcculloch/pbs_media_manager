@@ -1,9 +1,9 @@
-name = PBS Media Manager Program
+name = PBS Media Manager Show
 description = Provides Media Manager shows as Drupal entities.
-files[] = includes/pbs_media_manager_program.class.inc
+files[] = includes/pbs_media_manager_show.class.inc
 dependencies[] = pbs_media_manager
 dependencies[] = views
 dependencies[] = entity
-configure = admin/config/media/pbs_programs
+configure = admin/config/media/pbs_shows
 package = media
 core = 7.x

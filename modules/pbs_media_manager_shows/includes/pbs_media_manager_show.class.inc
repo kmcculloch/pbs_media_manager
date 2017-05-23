@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * Provides an EntityAPIController for our custom program entities.
+ * Provides an EntityAPIController for our custom show entities.
  */
 
 /**
- * Extending the EntityAPIController for the pbs_media_managerProgram entity.
+ * Extending the EntityAPIController for the pbs_media_managerShow entity.
  */
-class PbsMediaProgramEntityController extends EntityAPIController {
+class PbsMediaShowEntityController extends EntityAPIController {
 
   /**
    * Creates the content for this entity.
@@ -75,13 +75,13 @@ class PbsMediaProgramEntityController extends EntityAPIController {
 /**
  * Project entity class extending the Entity class.
  */
-class PbsMediaProgramEntity extends Entity {
+class PbsMediaShowEntity extends Entity {
 
   /**
-   * Change the default URI from default/id to pbs_program/id.
+   * Change the default URI from default/id to pbs_show/id.
    */
   protected function defaultUri() {
-    return array('path' => 'pbs_program/' . $this->identifier());
+    return array('path' => 'pbs_show/' . $this->identifier());
   }
 
 }

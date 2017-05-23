@@ -2,24 +2,24 @@
 
 /**
  * @file
- * Defines the schema for Program entity and field.
+ * Defines the schema for Show entity and field.
  */
 
 /**
  * Implements hook_schema().
  */
-function pbs_media_manager_program_schema() {
-  $schema['pbs_media_manager_programs'] = array(
-    'description' => 'The base table for the pbs_media_manager program entity',
+function pbs_media_manager_show_schema() {
+  $schema['pbs_media_manager_shows'] = array(
+    'description' => 'The base table for the pbs_media_manager show entity',
     'fields' => array(
       'id' => array(
-        'description' => 'Primary key for pbs_media_manager program',
+        'description' => 'Primary key for pbs_media_manager show',
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'title' => array(
-        'description' => "Program Title",
+        'description' => "Show Title",
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
@@ -31,7 +31,7 @@ function pbs_media_manager_program_schema() {
         'not null' => TRUE,
       ),
       'link' => array(
-        'description' => "Program web site",
+        'description' => "Show web site",
         'type' => 'varchar',
         'length' => 2083,
         'not null' => FALSE,
@@ -43,28 +43,28 @@ function pbs_media_manager_program_schema() {
         'not null' => FALSE,
       ),
       'slug' => array(
-        'description' => 'Program Slug.',
+        'description' => 'Show Slug.',
         'type' => 'text',
         'length' => '1024',
         'not null' => FALSE,
         'default' => NULL,
       ),
       'nola_root' => array(
-        'description' => 'Program nola root.',
+        'description' => 'Show nola root.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
         'default' => NULL,
       ),
       'short_description' => array(
-        'description' => 'Short Program description.',
+        'description' => 'Short Show description.',
         'type' => 'text',
         'size' => 'big',
         'not null' => FALSE,
         'default' => NULL,
       ),
       'long_description' => array(
-        'description' => 'Full Program description.',
+        'description' => 'Full Show description.',
         'type' => 'text',
         'size' => 'big',
         'not null' => FALSE,
@@ -102,16 +102,16 @@ function pbs_media_manager_program_schema() {
  *
  * @ingroup field_example
  */
-function pbs_media_manager_program_field_schema($field) {
+function pbs_media_manager_show_field_schema($field) {
   $columns = array(
-    'program_entity_id' => array(
+    'show_entity_id' => array(
       'type' => 'int',
       'size' => 'big',
       'not null' => FALSE,
     ),
   );
   $indexes = array(
-    'program_entity_id' => array('program_entity_id'),
+    'show_entity_id' => array('show_entity_id'),
   );
   return array(
     'columns' => $columns,
@@ -122,10 +122,10 @@ function pbs_media_manager_program_field_schema($field) {
 /**
  * Implements hook_uninstall().
  */
-function pbs_media_manager_program_uninstall() {
-  variable_del('pbs_media_manager_program_import_filters');
-  variable_del('pbs_media_manager_program_importer_last_count');
-  variable_del('pbs_media_manager_program_run_cron');
-  variable_del('pbs_media_manager_program_cron_frequency');
-  variable_del('pbs_media_manager_program_cron_last');
+function pbs_media_manager_show_uninstall() {
+  variable_del('pbs_media_manager_show_import_filters');
+  variable_del('pbs_media_manager_show_importer_last_count');
+  variable_del('pbs_media_manager_show_run_cron');
+  variable_del('pbs_media_manager_show_cron_frequency');
+  variable_del('pbs_media_manager_show_cron_last');
 }
