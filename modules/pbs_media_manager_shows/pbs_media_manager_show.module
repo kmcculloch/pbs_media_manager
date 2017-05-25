@@ -6,8 +6,8 @@
  */
 
 define('PBS_MEDIA_MANAGER_SHOW_MENU_AUTOCOMPLETE', 'pbs_media_manager_show/show_lookup/unique_pbs_media_manager_show_autocomplete_callback');
-define('PBS_MEDIA_MANAGER_SHOW_MENU_CONFIG', 'admin/config/media/pbs_shows');
-define('PBS_MEDIA_MANAGER_SHOW_MENU_IMPORT', 'admin/config/media/pbs_shows/import');
+define('PBS_MEDIA_MANAGER_SHOW_MENU_CONFIG', 'admin/config/media/pbs_media_manager/pbs_shows');
+define('PBS_MEDIA_MANAGER_SHOW_MENU_IMPORT', 'admin/config/media/pbs_media_manager/pbs_shows_import');
 
 /**
  * Implements hook_menu().
@@ -17,7 +17,7 @@ function pbs_media_manager_show_menu() {
 
   $items[PBS_MEDIA_MANAGER_SHOW_MENU_CONFIG] = array(
     'title' => 'PBS Show Settings',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'type' => MENU_LOCAL_TASK,
     'description' => 'Settings for the pbs_media_manager Show entity module.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('pbs_media_manager_show_admin_form'),
@@ -32,6 +32,7 @@ function pbs_media_manager_show_menu() {
     'page arguments' => array('pbs_media_manager_show_importer_form'),
     'access arguments' => array('administer_pbs_media_manager_shows'),
     'file' => 'pbs_media_manager_show.admin.inc',
+    'weight' => 5,
   );
   $items[PBS_MEDIA_MANAGER_SHOW_MENU_AUTOCOMPLETE] = array(
     'page callback' => 'pbs_media_manager_show_widget_autocomplete',
