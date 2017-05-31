@@ -15,6 +15,12 @@ define('PBS_MEDIA_MANAGER_SHOW_MENU_IMPORT', 'admin/config/media/pbs_media_manag
 function pbs_media_manager_show_menu() {
   $items = array();
 
+  $items['admin/config/media/pbs_media_manager/default'] = array(
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
   $items[PBS_MEDIA_MANAGER_SHOW_MENU_CONFIG] = array(
     'title' => 'PBS Show Settings',
     'type' => MENU_LOCAL_TASK,

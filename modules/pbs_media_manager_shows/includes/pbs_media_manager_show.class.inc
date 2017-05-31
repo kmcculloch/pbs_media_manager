@@ -84,4 +84,111 @@ class PbsMediaShowEntity extends Entity {
     return array('path' => 'pbs_show/' . $this->identifier());
   }
 
+  /**
+   * Get the full detail record for this show.
+   */
+  public function getFullDetail() {
+    return $this->makeRequest();
+  }
+
+  /**
+   * Uses the Media Manager API to pull a list of seasons for this Show.
+   */
+  public function getSeasons() {
+    return $this->makeRequest('season');
+  }
+
+  /**
+   * Uses the Media Manager API to pull a list of assets for this Show.
+   */
+  public function getAssets() {
+    return $this->makeRequest('asset');
+  }
+
+  /**
+   * Uses the Media Manager API to pull a list of specials for this Show.
+   */
+  public function getSpecials() {
+    return $this->makeRequest('special');
+  }
+
+  /**
+   * Uses the Media Manager API to pull a list of collections for this Show.
+   */
+  public function getCollections() {
+    return $this->makeRequest('collection');
+  }
+
+  /**
+   * Uses the Media Manager API to pull a list of taxonomies for this Show.
+   */
+  public function getTaxonomies() {
+    return $this->makeRequest('taxonomies');
+  }
+
+  /**
+   * Uses the Media Manager API to build list of episodes for the Show.
+   *
+   * Media Manager does not directly provide a way to do this, so this requires
+   * several round trips to the API, and is therefore a VERY slow method.
+   *
+   * @param int $count
+   *   The number of episodes to retrieve.
+   */
+  public function getLatestEpisodes($count) {
+    $seasons = $this->getSeasons();
+
+    $total = $seasons['meta']['pagination']['count'];
+    $episodes = array();
+
+    // Sort the seasons by ordinal value.
+    usort($seasons, function ($a, $b) {
+      return $a['attributes']['ordinal'] > $b['attributes']['ordinal'];
+    });
+
+    // For each seasons load the list of episodes from MM and build up the
+    // the episode list until it reaches count.  Then return list.
+    foreach ($seasons as $season) {
+
+      // Load the season's episodes.
+      $season_episodes = pbs_media_manager_request('episode', $season['id'], 'season', '', array('sort' => '-ordinal'));
+
+      foreach ($season_episodes as $episode) {
+        // Load the asset list for each episode to find the player and links.
+        $episode_assets = pbs_media_manager_request('asset', $episode['id'], 'episode');
+
+        foreach ($episode_assts as $asset) {
+          if ($asset['object_type'] == 'full_length') {
+            $episode['player'] = $asset;
+          }
+        }
+
+        $episodes[] = $episode;
+
+        if (count($episodes) >= $count) {
+          return $episodes;
+        }
+      }
+    }
+  }
+
+  /**
+   * Makes the actual request of the API.
+   *
+   * @param string $resource
+   *   The primary resource to lookup. Defaults to the show itself.
+   *
+   * @return bool|object
+   */
+  private function makeRequest($resource = 'show') {
+    module_load_include('module', 'pbs_media_manager');
+
+    if ($resource == 'show') {
+      return pbs_media_manager_request('show', $this->pbs_media_manager_show_id);
+    }
+
+    return pbs_media_manager_request($resource, $this->pbs_media_manager_show_id, 'show');
+
+  }
+
 }
