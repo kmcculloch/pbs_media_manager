@@ -16,14 +16,32 @@
  */
 function pbs_media_manager_player_field_schema($field) {
   $columns = array(
-    'object_id' => array(
-      'type' => 'int',
-      'size' => 'big',
+    'asset_id' => array(
+      'type' => 'varchar',
+      'length' => '255',
       'not null' => FALSE,
+    ),
+    'url' => array(
+      'type' => 'varchar',
+      'length' => '255',
+      'not null' => FALSE,
+    ),
+    'slug' => array(
+      'type' => 'varchar',
+      'length' => '255',
+      'not null' => FALSE,
+    ),
+    'title' => array(
+      'type' => 'varchar',
+      'length' => '255',
+    ),
+    'description' => array(
+      'type' => 'text',
+      'size' => 'big',
     ),
   );
   $indexes = array(
-    'object_id' => array('object_id'),
+    'asset_id' => array('asset_id'),
   );
   return array(
     'columns' => $columns,

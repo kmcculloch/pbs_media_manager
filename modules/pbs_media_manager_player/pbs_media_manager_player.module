@@ -16,11 +16,6 @@
  */
 function pbs_media_manager_player_menu() {
 
-  if (empty(_pbs_media_manager_player_find_cove_fields())) {
-    return array();
-  }
-  
-
   $items = array();
 
   $items['admin/config/media/pbs_media_manager/default'] = array(
@@ -50,7 +45,7 @@ function pbs_media_manager_player_field_info() {
     'pbs_video' => array(
       'label' => t('PBS Media'),
       'description' => t('Stores a video accessible through the PBS Media Manager API.'),
-      'default_widget' => 'pbs_media_id',
+      'default_widget' => 'pbs_media_url',
       'default_formatter' => 'pbs_media_manager_player_formatter',
     ),
   );
@@ -65,7 +60,7 @@ function pbs_media_manager_player_field_info() {
  */
 function pbs_media_manager_player_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
   foreach ($items as $delta => $item) {
-    if (!empty($item['object_id'])) {
+    if (!empty($item['url'])) {
       // TODO: regex to to validate ID structure.
     }
   }
@@ -75,8 +70,9 @@ function pbs_media_manager_player_field_validate($entity_type, $entity, $field, 
  * Implements hook_field_is_empty().
  */
 function pbs_media_manager_player_field_is_empty($item, $field) {
-  return empty($item['object_id']);
+  return empty($item['url']);
 }
+
 
 /**
  * Implements hook_field_widget_error().
@@ -90,6 +86,80 @@ function pbs_media_manager_player_field_widget_error($element, $error, $form, &$
 }
 
 /**
+ * Implements hook_field_widget_form().
+ *
+ */
+function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  
+  switch ($instance['widget']['type']) {
+    
+    case 'pbs_media_url' :
+      $element['url'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Video URL'),
+        '#default_value' => isset($items[$delta]['url']) ?
+          $items[$delta]['url'] : '',
+        '#size' => 60,
+        '#maxlength' => 255,
+        '#required' => $element['#required'],
+        '#element_validate' => array('pbs_media_manager_player_element_validate')
+      );
+      
+      $element['api_data'] = array(
+        '#type' => 'fieldset',
+        '#title' => $element['#title'],
+        '#tree' => TRUE,
+      );
+      
+      $element['api_data']['slug'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Slug'),
+        '#default_value' => isset($items[$delta]['slug']) ?
+          $items[$delta]['slug'] : '',
+        '#size' => 60,
+        '#maxlength' => 256,
+        '#disabled' => TRUE,
+      );
+      
+      $element['api_data']['asset_id'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Asset ID'),
+        '#default_value' => isset($items[$delta]['asset_id']) ?
+          $items[$delta]['asset_id'] : '',
+        '#size' => 60,
+        '#maxlength' => 256,
+        '#disabled' => TRUE,
+      );
+      
+      $element['api_data']['title'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Asset Title'),
+        '#default_value' => isset($items[$delta]['title']) ?
+          $items[$delta]['title'] : '',
+        '#size' => 60,
+        '#maxlength' => 256,
+        '#disabled' => TRUE,
+      );
+      
+      $element['api_data']['description'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Description'),
+        '#default_value' => isset($items[$delta]['description']) ?
+          $items[$delta]['description'] : '',
+        '#disabled' => TRUE,
+      );
+      
+      break;
+    
+    
+  }
+  
+  return $element;
+}
+
+
+
+/**
  * Implements hook_field_formatter_info().
  */
 function pbs_media_manager_player_field_formatter_info() {
@@ -97,100 +167,28 @@ function pbs_media_manager_player_field_formatter_info() {
     'pbs_media_manager_player_formatter' => array(
       'label' => t('PBS Media Player'),
       'field types' => array('pbs_video'),
-      'settings' => array(
-        'width' => 512,
-        'height' => 288,
-        'chapterbar' => FALSE,
-        'autoplay' => FALSE,
-      ),
     ),
   );
 }
 
-/**
- * Implements hook_field_formatter_settings_form().
- */
-function pbs_media_manager_player_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
-  // Settings are stored in the display mode.
-  $display = $instance['display'][$view_mode];
-  $settings = $display['settings'];
-  $element = array();
-  // Video player width.
-  $element['width'] = array(
-    '#type'           => 'textfield',
-    '#title'          => t('Width'),
-    '#description'    => t('Width of the video player in pixels'),
-    '#default_value'  => $settings['width'],
-  );
-  // Video player height.
-  $element['height'] = array(
-    '#type'           => 'textfield',
-    '#title'          => t('Height'),
-    '#description'    => t('Height of the video player in pixels'),
-    '#default_value'  => $settings['height'],
-  );
-  // Display chapter bar?
-  $element['chapterbar'] = array(
-    '#type'           => 'checkbox',
-    '#title'          => t('Display chapter bar?'),
-    '#default_value'  => $settings['chapterbar'],
-  );
-  // Autoplay video?
-  $element['autoplay'] = array(
-    '#type'           => 'checkbox',
-    '#title'          => t('Autoplay?'),
-    '#default_value'  => $settings['autoplay'],
-  );
-  return $element;
-}
-
-/**
- * Implements hook_field_formatter_settings_summary().
- */
-function pbs_media_manager_player_field_formatter_settings_summary($field, $instance, $view_mode) {
-  $display = $instance['display'][$view_mode];
-  $settings = $display['settings'];
-  $summary = t('Display a video player @width pixels wide and @height pixels high', array(
-    '@width'     => $settings['width'],
-    '@height'  => $settings['height'],
-  ));
-  return $summary;
-}
 
 /**
  * Implements hook_field_formatter_view().
  */
 function pbs_media_manager_player_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
-  $settings = $display['settings'];
-  $width = $settings['width'];
-  $height = $settings['height'];
-  $chapterbar = $settings['chapterbar'];
-  $autoplay = $settings['autoplay'];
+
 
   foreach ($items as $delta => $item) {
-    $object_id = $item['object_id'];
+    $asset_id = $item['asset_id'];
   }
-  if (isset($object_id)) {
-    $args = array();
-    $resource = 'asset_legacy';
-    $legacyID = $object_id;
-    if (isset($width)) {
-      $args['w'] = $width;
-    }
-    if (isset($height)) {
-      $args['h'] = $height;
-    }
-    if (isset($chapterbar)) {
-      $args['chapterbar'] = $chapterbar;
-    }
-    if (isset($autoplay)) {
-      $args['autoplay'] = $autoplay;
-    }
+  if (isset($asset_id)) {
+
+    $resource = 'asset';
+    $resourceID = $asset_id;
 
     // Request the video object from PBS.
-    $response = pbs_media_manager_request($resource, $resourceID = NULL,
-      $parentResource = NULL, $legacyID);
+    $response = pbs_media_manager_request($resource, $resourceID);
 
     // If our API key allows, use the PBS partner player.
     if (isset($response['data']['attributes']['player_code'])) {
@@ -212,10 +210,11 @@ function pbs_media_manager_player_field_formatter_view($entity_type, $entity, $f
       // we can create it ourselves using the COVE video ID.
     }
     else {
-      $player = '<iframe width="800" height="450" src="http://player.pbs.org/viralplayer/' . check_plain($object_id) . '" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" seamless></iframe>';
+      // TODO: This doesn't work anymore.
+      //$player = '<iframe width="800" height="450" src="http://player.pbs.org/viralplayer/' . check_plain($object_id) . '" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" seamless></iframe>';
       // Assign it to the #markup of the element.
-      $element[0]['#markup'] = '<br clear="all" /><div class="viral-player"><div>'
-                               . $player . '</div></div>';
+      //$element[0]['#markup'] = '<br clear="all" /><div class="viral-player"><div>'
+                               //. $player . '</div></div>';
     }
   }
   return $element;
@@ -226,27 +225,13 @@ function pbs_media_manager_player_field_formatter_view($entity_type, $entity, $f
  */
 function pbs_media_manager_player_field_widget_info() {
   return array(
-    'pbs_media_id' => array(
-      'label' => t('PBS Object ID'),
+    'pbs_media_url' => array(
+      'label' => t('PBS Video URL'),
       'field types' => array('pbs_video'),
     ),
   );
 }
 
-/**
- * Implements hook_field_widget_form().
- */
-function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-  $element['object_id'] = array(
-    '#title' => t('PBS Media'),
-    '#description' => t('Enter the PBS media object ID for this video.'),
-    '#type' => 'textfield',
-    '#size' => 20,
-    '#default_value' => !empty($items[0]['object_id']) ? $items[0]['object_id'] : '',
-    '#element_validate' => array('pbs_media_manager_player_element_validate'),
-  );
-  return $element;
-}
 
 /**
  * Validate function for pbs_media_manager_player_field_widget_form().
@@ -255,18 +240,47 @@ function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field
  * positive integer and is a valid COVE object ID.
  */
 function pbs_media_manager_player_element_validate($element, &$form_state) {
-  $value = trim($element['#value']);
-  if (!empty($value)) {
-    // Check with PBS to make sure it's a valid object ID.
-    $resource = 'asset';
-    $legacyID = $value;
-    $response = pbs_media_manager_request($resource, $resourceID = NULL,
-      $parentResource = NULL, $legacyID);
-    if (!isset($response['data']['attributes']['player_code'])) {
-      form_error($element, t('%name is not a valid asset ID.', array('%name' => $element['#title'])));
-    }
+  $url = trim($element['#value']);
+  
+  
+  if (!empty($url)) {
+    // find the slug
+    $parsed_url = parse_url($url);
+    $slug = basename($parsed_url['path']);
 
-    form_set_value($element, $value, $form_state);
+    
+  
+    // Check with PBS to make sure it's a valid slug.
+    $resource = 'asset';
+    $resourceID = $slug;
+    $response = pbs_media_manager_request($resource, $resourceID);
+    
+    // If there's no ID in the response, this fails.
+    if (!isset($response['data']['id'])) {
+      form_error($element, t('%name is not a URL.', array('%name' => $element['#title'])));
+    }
+    
+    // Otherwise, sanitize the results
+    $asset_id = check_plain($response['data']['id']);
+    $title = check_plain($response['data']['attributes']['title']);
+    $description = check_plain($response['data']['attributes']['description_short']);
+    
+    $values = array(
+      'slug' => $slug,
+      'asset_id' => $asset_id,
+      'title' => $title,
+      'description' => $description,
+    );
+    
+    // get the field
+    $field = $element['#parents'][0];
+    
+    // insert the values into the form
+    $form[$field]['#parents'] = array($field);
+    form_set_value($form[$field], array(LANGUAGE_NONE => array(0 => $values)), $form_state);
+    form_set_value($element, $url, $form_state);
+
+  
   }
 }
 
