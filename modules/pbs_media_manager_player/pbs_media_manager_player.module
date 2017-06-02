@@ -293,38 +293,40 @@ function pbs_media_manager_player_element_validate($element, &$form_state) {
     }
   }
   
-  $response = pbs_media_manager_request($resource, $resourceID);
-      
-  // If there's no ID in the response, this fails.
-  if (!isset($response['data']['id'])) {
-    form_error($element, t('%name is not a valid PBS Video URL.', array('%name' => $element['#title'])));
-  }
-  else {
-    // Otherwise, sanitize the results
-    $asset_id = check_plain($response['data']['id']);
-    $slug = check_plain($response['data']['attributes']['slug']);
-    $title = check_plain($response['data']['attributes']['title']);
-    $description = check_plain($response['data']['attributes']['description_short']);
-    $premiere_date = check_plain($response['data']['attributes']['premiered_on']);
-    $encore_date = check_plain($response['data']['attributes']['encored_on']);
-    
-    $values = array(
-      'slug' => $slug,
-      'asset_id' => $asset_id,
-      'title' => $title,
-      'description' => $description,
-      'premiere_date' => $premiere_date,
-      'encore_date' => $encore_date,
-    );
-    
-    if (isset($old_slug) && $slug != $old_slug) {
-      $url = str_replace($old_slug, $slug, $url);
-    }
+  if (isset($resourceID)) {
+    $response = pbs_media_manager_request($resource, $resourceID);
   
-    // insert the values into the form
-    $form[$field]['#parents'] = array($field);
-    form_set_value($form[$field], array(LANGUAGE_NONE => array(0 => $values)), $form_state);
-    form_set_value($element, $url, $form_state);
+    // If there's no ID in the response, this fails.
+    if (!isset($response['data']['id'])) {
+      form_error($element, t('%name is not a valid PBS Video URL.', array('%name' => $element['#title'])));
+    }
+    else {
+      // Otherwise, sanitize the results
+      $asset_id = check_plain($response['data']['id']);
+      $slug = check_plain($response['data']['attributes']['slug']);
+      $title = check_plain($response['data']['attributes']['title']);
+      $description = check_plain($response['data']['attributes']['description_short']);
+      $premiere_date = check_plain($response['data']['attributes']['premiered_on']);
+      $encore_date = check_plain($response['data']['attributes']['encored_on']);
+    
+      $values = array(
+        'slug' => $slug,
+        'asset_id' => $asset_id,
+        'title' => $title,
+        'description' => $description,
+        'premiere_date' => $premiere_date,
+        'encore_date' => $encore_date,
+      );
+    
+      if (isset($old_slug) && $slug != $old_slug) {
+        $url = str_replace($old_slug, $slug, $url);
+      }
+    
+      // insert the values into the form
+      $form[$field]['#parents'] = array($field);
+      form_set_value($form[$field], array(LANGUAGE_NONE => array(0 => $values)), $form_state);
+      form_set_value($element, $url, $form_state);
+    }
   }
 }
 
