@@ -54,16 +54,160 @@ function pbs_media_manager_player_field_info() {
 }
 
 /**
+ * Implements hook_field_presave().
+ */
+function pbs_media_manager_player_field_presave($entity_type, $entity, $field,
+  $instance, $langcode, &$items) {
+
+  // TODO: Figure out how to update url if slug has changed but inputted URL has not.
+  // set the resource
+  $resource = 'asset';
+  
+  foreach ($items as $delta => $item) {
+    
+    // sanitize the URL
+    $url = check_plain(trim($item['url']));
+  
+    // parse the URL to get the path
+    $parsed_url = parse_url($url);
+
+    // find the slug
+    $slug = basename($parsed_url['path']);
+    $resourceID = $slug;
+  
+    $response = pbs_media_manager_request($resource, $resourceID);
+ 
+    // If there's no ID in the response, this fails.
+    if (!isset($response['data']['id'])) {
+      // TODO: Set appropriate error message.
+      //form_error($element, t('%name is not a valid PBS Video URL.', array('%name' => $element['#title'])));
+    }
+    else {
+      // Otherwise, sanitize the results
+      $asset_id = check_plain($response['data']['id']);
+      $slug = check_plain($response['data']['attributes']['slug']);
+      $title = check_plain($response['data']['attributes']['title']);
+      $description = check_plain($response['data']['attributes']['description_short']);
+      $premiere_date = check_plain($response['data']['attributes']['premiered_on']);
+      $encore_date = check_plain($response['data']['attributes']['encored_on']);
+    
+      // Set values. This must be flat.
+      $items[$delta]['asset_id'] = $asset_id;
+      $items[$delta]['slug'] = $slug;
+      $items[$delta]['title'] = $title;
+      $items[$delta]['description'] = $description;
+      $items[$delta]['premiere_date'] = $premiere_date;
+      $items[$delta]['encore_date'] = $encore_date;
+      unset($items[$delta]['api_data']);
+
+    }
+  }
+
+}
+
+/**
  * Implements hook_field_validate().
  *
  * @see pbs_media_manager_player_field_widget_error()
  */
 function pbs_media_manager_player_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
+  
   foreach ($items as $delta => $item) {
-    if (!empty($item['url'])) {
-      // TODO: regex to to validate ID structure.
+    // sanitize the URL
+    $url = check_plain(trim($item['url']));
+  
+    // check to see if the URL is valid and absolute
+    if (!empty($url) && !valid_url($url, $absolute = TRUE)) {
+      $errors[$field['field_name']][$langcode][$delta][] = array(
+        'error' => 'pbs_media_manager_player_invalid_url',
+        'message' => t('%name: %url is not a valid URL.', array('%name' => $instance['label'], '%url' => $url)),
+      );
     }
+    else {
+      $parsed_url = parse_url($url);
+      if (isset($parsed_url['path']) && !empty($parsed_url['path'])) {
+        
+        $path_array = explode('/', $parsed_url['path']);
+        
+        // paths should have the structure /video/[slug]
+        if (count($path_array < 3) && $path_array[1] != 'video') {
+          $errors[$field['field_name']][$langcode][$delta][] = array(
+            'error' => 'pbs_media_manager_player_malformed_url',
+            'message' => t('%name: %url is not a valid PBS Video URL.', array('%name' => $instance['label'], '%url' => $url)),
+          );
+        }
+      }
+    }
+    
+    
   }
+  
+  
+  /*
+  // TODO: Old code left here in case it's need. Remove when ready.
+    // if the value hasn't changed, we set the asset id as the resourceID
+    if ($element['#default_value'] == $element['#value'] && !empty($element['#value'])) {
+    
+      $resourceID =
+        $form_state['values'][$field][LANGUAGE_NONE][$delta]['api_data']['asset_id'];
+    
+      // If the slug has changed, we'll need to update the URL anyway.
+      $old_slug = $form_state['values'][$field][LANGUAGE_NONE][$delta]['api_data']['slug'];
+    
+    } else {
+    
+      if (!empty($url)) {
+        // find the URL path
+        $parsed_url = parse_url($url);
+        // if there is is no path, throw an error
+        if (!isset($parsed_url['path']) || empty($parsed_url['path'])) {
+          form_error($element,
+            t('%name is not a valid URL.', array('%name' => $element['#title'])));
+        }
+        // otherwise, get the slug and set it as the resourceID
+        else {
+          $slug = basename($parsed_url['path']);
+          $resourceID = $slug;
+        }
+      }
+    }
+  
+    if (isset($resourceID)) {
+      $response = pbs_media_manager_request($resource, $resourceID);
+    
+      // If there's no ID in the response, this fails.
+      if (!isset($response['data']['id'])) {
+        form_error($element, t('%name is not a valid PBS Video URL.', array('%name' => $element['#title'])));
+      }
+      else {
+        // Otherwise, sanitize the results
+        $asset_id = check_plain($response['data']['id']);
+        $slug = check_plain($response['data']['attributes']['slug']);
+        $title = check_plain($response['data']['attributes']['title']);
+        $description = check_plain($response['data']['attributes']['description_short']);
+        $premiere_date = check_plain($response['data']['attributes']['premiered_on']);
+        $encore_date = check_plain($response['data']['attributes']['encored_on']);
+      
+        $values = array(
+          'slug' => $slug,
+          'asset_id' => $asset_id,
+          'title' => $title,
+          'description' => $description,
+          'premiere_date' => $premiere_date,
+          'encore_date' => $encore_date,
+        );
+      
+        if (isset($old_slug) && $slug != $old_slug) {
+          $url = str_replace($old_slug, $slug, $url);
+        }
+      
+        // insert the values into the form
+        $form[$field]['#parents'] = array($field);
+        form_set_value($form[$field], array(LANGUAGE_NONE => array($delta => $values)), $form_state);
+        form_set_value($element, $url, $form_state);
+      }
+
+  */
 }
 
 /**
@@ -79,7 +223,10 @@ function pbs_media_manager_player_field_is_empty($item, $field) {
  */
 function pbs_media_manager_player_field_widget_error($element, $error, $form, &$form_state) {
   switch ($error['error']) {
-    case 'pbs_media_manager_player_invalid':
+    case 'pbs_media_manager_player_invalid_url':
+      form_error($element, $error['message']);
+      break;
+    case 'pbs_media_manager_player_malformed_url':
       form_error($element, $error['message']);
       break;
   }
@@ -102,7 +249,7 @@ function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field
         '#size' => 60,
         '#maxlength' => 255,
         '#required' => $element['#required'],
-        '#element_validate' => array('pbs_media_manager_player_element_validate')
+        //'#element_validate' => array('pbs_media_manager_player_element_validate')
       );
       
       $element['api_data'] = array(
@@ -247,89 +394,6 @@ function pbs_media_manager_player_field_widget_info() {
     ),
   );
 }
-
-
-/**
- * Validate function for pbs_media_manager_player_field_widget_form().
- *
- * Remove any whitespace from the input value and make sure what's left is a
- * positive integer and is a valid COVE object ID.
- */
-function pbs_media_manager_player_element_validate($element, &$form_state) {
-
-  // set the resource
-  $resource = 'asset';
-  
-  // sanitize the URL
-  $url = check_plain(trim($element['#value']));
-  
-  // get the field
-  $field = $element['#parents'][0];
-  
-  // if the value hasn't changed, we set the asset id as the resourceID
-  if ($element['#default_value'] == $element['#value'] && !empty($element['#value'])) {
-    
-    $resourceID =
-      $form_state['values'][$field][LANGUAGE_NONE][0]['api_data']['asset_id'];
-    
-    // If the slug has changed, we'll need to update the URL anyway.
-    $old_slug = $form_state['values'][$field][LANGUAGE_NONE][0]['api_data']['slug'];
-  
-  } else {
-  
-    if (!empty($url)) {
-      // find the URL path
-      $parsed_url = parse_url($url);
-      // if there is is no path, throw an error
-      if (!isset($parsed_url['path']) || empty($parsed_url['path'])) {
-        form_error($element,
-          t('%name is not a valid URL.', array('%name' => $element['#title'])));
-      }
-      // otherwise, get the slug and set it as the resourceID
-      else {
-        $slug = basename($parsed_url['path']);
-        $resourceID = $slug;
-      }
-    }
-  }
-  
-  if (isset($resourceID)) {
-    $response = pbs_media_manager_request($resource, $resourceID);
-  
-    // If there's no ID in the response, this fails.
-    if (!isset($response['data']['id'])) {
-      form_error($element, t('%name is not a valid PBS Video URL.', array('%name' => $element['#title'])));
-    }
-    else {
-      // Otherwise, sanitize the results
-      $asset_id = check_plain($response['data']['id']);
-      $slug = check_plain($response['data']['attributes']['slug']);
-      $title = check_plain($response['data']['attributes']['title']);
-      $description = check_plain($response['data']['attributes']['description_short']);
-      $premiere_date = check_plain($response['data']['attributes']['premiered_on']);
-      $encore_date = check_plain($response['data']['attributes']['encored_on']);
-    
-      $values = array(
-        'slug' => $slug,
-        'asset_id' => $asset_id,
-        'title' => $title,
-        'description' => $description,
-        'premiere_date' => $premiere_date,
-        'encore_date' => $encore_date,
-      );
-    
-      if (isset($old_slug) && $slug != $old_slug) {
-        $url = str_replace($old_slug, $slug, $url);
-      }
-    
-      // insert the values into the form
-      $form[$field]['#parents'] = array($field);
-      form_set_value($form[$field], array(LANGUAGE_NONE => array(0 => $values)), $form_state);
-      form_set_value($element, $url, $form_state);
-    }
-  }
-}
-
 
 /**
  * Helper function to find old cove fields.
