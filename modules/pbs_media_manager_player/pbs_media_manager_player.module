@@ -149,6 +149,22 @@ function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field
         '#disabled' => TRUE,
       );
       
+      $element['api_data']['premiere_date'] = array(
+        '#type' => 'date',
+        '#title' => t('Premiere Date'),
+        '#default_value' => isset($items[$delta]['premiere_date']) ?
+          date_parse($items[$delta]['premiere_date']) : '',
+        '#disabled' => TRUE,
+      );
+      
+      $element['api_data']['encore_date'] = array(
+        '#type' => 'date',
+        '#title' => t('Encore Date'),
+        '#default_value' => isset($items[$delta]['encore_date']) ?
+          date_parse($items[$delta]['encore_date']) : '',
+        '#disabled' => TRUE,
+      );
+      
       break;
     
     
@@ -241,96 +257,77 @@ function pbs_media_manager_player_field_widget_info() {
  */
 function pbs_media_manager_player_element_validate($element, &$form_state) {
   
-  // we only need to validate the URL if it has changed
-  if ($element['#default_value'] != $element['#value']) {
-    $url = check_plain(trim($element['#value']));
+  // set the resource
+  $resource = 'asset';
   
+  // sanitize the URL
+  $url = check_plain(trim($element['#value']));
+  
+  // get the field
+  $field = $element['#parents'][0];
+  
+  // if the value hasn't changed, we set the asset id as the resourceID
+  if ($element['#default_value'] == $element['#value']) {
+    
+    $resourceID =
+      $form_state['values'][$field][LANGUAGE_NONE][0]['api_data']['asset_id'];
+    
+    // If the slug has changed, we'll need to update the URL anyway.
+    $old_slug = $form_state['values'][$field][LANGUAGE_NONE][0]['api_data']['slug'];
+  
+  } else {
   
     if (!empty($url)) {
-      // find the slug
+      // find the URL path
       $parsed_url = parse_url($url);
+      // if there is is no path, throw an error
       if (!isset($parsed_url['path']) || empty($parsed_url['path'])) {
-        form_error($element, t('%name is not a valid URL.', array('%name' => $element['#title'])));
+        form_error($element,
+          t('%name is not a valid URL.', array('%name' => $element['#title'])));
       }
+      // otherwise, get the slug and set it as the resourceID
       else {
         $slug = basename($parsed_url['path']);
-      
-        // Check with PBS to make sure it's a valid slug.
-        $resource = 'asset';
         $resourceID = $slug;
-        $response = pbs_media_manager_request($resource, $resourceID);
-      
-        // If there's no ID in the response, this fails.
-        if (!isset($response['data']['id'])) {
-          form_error($element, t('%name is not a valid PBS Video URL.', array('%name' => $element['#title'])));
-        }
-        else {
-          // Otherwise, sanitize the results
-          $asset_id = check_plain($response['data']['id']);
-          $title = check_plain($response['data']['attributes']['title']);
-          $description = check_plain($response['data']['attributes']['description_short']);
-        
-          $values = array(
-            'slug' => $slug,
-            'asset_id' => $asset_id,
-            'title' => $title,
-            'description' => $description,
-          );
-        
-          // get the field
-          $field = $element['#parents'][0];
-        
-          // insert the values into the form
-          $form[$field]['#parents'] = array($field);
-          form_set_value($form[$field], array(LANGUAGE_NONE => array(0 => $values)), $form_state);
-          form_set_value($element, $url, $form_state);
-        }
       }
-    }
-    // otherwise, we need to check to make sure the slug hasn't changed
-    else {
-      $resource = 'asset';
-      // get the field
-      $field = $element['#parents'][0];
-      $resourceID = $form_state['values'][$field][LANGUAGE_NONE][0]['api_data']['asset_id'];
-      $old_slug = $form_state['values'][$field][LANGUAGE_NONE][0]['api_data']['slug'];
-      $response = pbs_media_manager_request($resource, $resourceID);
-      
-      // if there is a slug in the response
-      if (!empty($response['data']['attributes']['slug'])) {
-        
-        // if the new slug doesn't match the old slug, update the asset info
-        if ($response['data']['attributes']['slug'] != $old_slug) {
-          
-          $slug = check_plain($response['data']['attributes']['slug']);
-          $title = check_plain($response['data']['attributes']['title']);
-          $description = check_plain($response['data']['attributes']['description_short']);
-  
-          $values = array(
-            'slug' => $slug,
-            'title' => $title,
-            'description' => $description,
-          );
-          
-          $url = str_replace($old_slug, $slug, $url);
-          
-          // insert the values into the form
-          $form[$field]['#parents'] = array($field);
-          form_set_value($form[$field], array(LANGUAGE_NONE => array(0 => $values)), $form_state);
-          form_set_value($element, $url, $form_state);
-          
-        }
-      }
-      else {
-        form_error($element, t('%name no longer exists.', array('%name' => $element['#title'])));
-      }
-      
-      
     }
   }
   
+  $response = pbs_media_manager_request($resource, $resourceID);
+      
+  // If there's no ID in the response, this fails.
+  if (!isset($response['data']['id'])) {
+    form_error($element, t('%name is not a valid PBS Video URL.', array('%name' => $element['#title'])));
+  }
+  else {
+    // Otherwise, sanitize the results
+    $asset_id = check_plain($response['data']['id']);
+    $slug = check_plain($response['data']['attributes']['slug']);
+    $title = check_plain($response['data']['attributes']['title']);
+    $description = check_plain($response['data']['attributes']['description_short']);
+    $premiere_date = check_plain($response['data']['attributes']['premiered_on']);
+    $encore_date = check_plain($response['data']['attributes']['encored_on']);
+    
+    $values = array(
+      'slug' => $slug,
+      'asset_id' => $asset_id,
+      'title' => $title,
+      'description' => $description,
+      'premiere_date' => $premiere_date,
+      'encore_date' => $encore_date,
+    );
+    
+    if (isset($old_slug) && $slug != $old_slug) {
+      $url = str_replace($old_slug, $slug, $url);
+    }
   
+    // insert the values into the form
+    $form[$field]['#parents'] = array($field);
+    form_set_value($form[$field], array(LANGUAGE_NONE => array(0 => $values)), $form_state);
+    form_set_value($element, $url, $form_state);
+  }
 }
+
 
 /**
  * Helper function to find old cove fields.

@@ -39,6 +39,16 @@ function pbs_media_manager_player_field_schema($field) {
       'type' => 'text',
       'size' => 'big',
     ),
+    'premiere_date' => array(
+      'type' => 'varchar',
+      'length' => '255',
+      'not null' => FALSE,
+    ),
+    'encore_date' => array(
+      'type' => 'varchar',
+      'length' => '255',
+      'not null' => FALSE,
+    ),
   );
   $indexes = array(
     'asset_id' => array('asset_id'),
