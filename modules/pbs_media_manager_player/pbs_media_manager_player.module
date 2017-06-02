@@ -256,7 +256,7 @@ function pbs_media_manager_player_field_widget_info() {
  * positive integer and is a valid COVE object ID.
  */
 function pbs_media_manager_player_element_validate($element, &$form_state) {
-  dpm($element, 'element');
+
   // set the resource
   $resource = 'asset';
   
