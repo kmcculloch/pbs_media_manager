@@ -49,6 +49,11 @@ function pbs_media_manager_player_field_schema($field) {
       'length' => '255',
       'not null' => FALSE,
     ),
+    'original_url' => array(
+      'type' => 'varchar',
+      'length' => '255',
+      'not null' => FALSE,
+    ),
   );
   $indexes = array(
     'asset_id' => array('asset_id'),

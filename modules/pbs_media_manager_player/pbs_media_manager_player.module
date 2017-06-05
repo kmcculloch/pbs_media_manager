@@ -58,8 +58,7 @@ function pbs_media_manager_player_field_info() {
  */
 function pbs_media_manager_player_field_presave($entity_type, $entity, $field,
   $instance, $langcode, &$items) {
-
-  // TODO: Figure out how to update url if slug has changed but inputted URL has not.
+  
   // set the resource
   $resource = 'asset';
   
@@ -67,13 +66,22 @@ function pbs_media_manager_player_field_presave($entity_type, $entity, $field,
     
     // sanitize the URL
     $url = check_plain(trim($item['url']));
+    $original_url = check_plain(trim($item['original_url']));
+    
+    // if this is an update but the URL hasn't changed, we'll want to query
+    // the asset and check that the slug hasn't changed
+    if ($url == $original_url) {
+      $resourceID = $item['api_data']['asset_id'];
+      $orig_slug = $item['api_data']['slug'];
+    }
+    else {
+      // parse the URL to get the path
+      $parsed_url = parse_url($url);
   
-    // parse the URL to get the path
-    $parsed_url = parse_url($url);
-
-    // find the slug
-    $slug = basename($parsed_url['path']);
-    $resourceID = $slug;
+      // find the slug
+      $slug = basename($parsed_url['path']);
+      $resourceID = $slug;
+    }
   
     $response = pbs_media_manager_request($resource, $resourceID);
  
@@ -99,6 +107,13 @@ function pbs_media_manager_player_field_presave($entity_type, $entity, $field,
       $items[$delta]['premiere_date'] = $premiere_date;
       $items[$delta]['encore_date'] = $encore_date;
       unset($items[$delta]['api_data']);
+      
+      // If this is an update with the same URL, and the slug has changed, we
+      // need to update the URL to match.
+      if (isset($orig_slug) && $orig_slug != $slug) {
+        $updated_url = str_replace($orig_slug, $slug, $url);
+        $items[$delta]['url'] = $updated_url;
+      }
 
     }
   }
@@ -249,7 +264,12 @@ function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field
         '#size' => 60,
         '#maxlength' => 255,
         '#required' => $element['#required'],
-        //'#element_validate' => array('pbs_media_manager_player_element_validate')
+      );
+      
+      $element['original_url'] = array(
+        '#type' => 'hidden',
+        '#value' => isset($items[$delta]['url']) ?
+      $items[$delta]['url'] : '',
       );
       
       $element['api_data'] = array(
