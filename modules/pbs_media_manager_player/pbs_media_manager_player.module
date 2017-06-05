@@ -79,8 +79,8 @@ function pbs_media_manager_player_field_presave($entity_type, $entity, $field,
  
     // If there's no ID in the response, this fails.
     if (!isset($response['data']['id'])) {
-      // TODO: Set appropriate error message.
-      //form_error($element, t('%name is not a valid PBS Video URL.', array('%name' => $element['#title'])));
+      
+      drupal_set_message(t('%name: %url did not return a valid response from the PBS Media Manager API. You may want to check that the URL is correct.', array('%name' => $instance['label'], '%url' => $url)), 'warning');
     }
     else {
       // Otherwise, sanitize the results
@@ -144,7 +144,7 @@ function pbs_media_manager_player_field_validate($entity_type, $entity, $field, 
   
   
   /*
-  // TODO: Old code left here in case it's need. Remove when ready.
+  // TODO: Old code left here in case it's needed. Remove when ready.
     // if the value hasn't changed, we set the asset id as the resourceID
     if ($element['#default_value'] == $element['#value'] && !empty($element['#value'])) {
     
