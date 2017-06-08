@@ -26,6 +26,11 @@ function pbs_media_manager_player_field_schema($field) {
       'length' => '255',
       'not null' => FALSE,
     ),
+    'legacy_id' => array(
+      'type' => 'int',
+      'size' => 'big',
+      'not null' => FALSE,
+    ),
     'slug' => array(
       'type' => 'varchar',
       'length' => '255',
@@ -39,6 +44,7 @@ function pbs_media_manager_player_field_schema($field) {
       'type' => 'text',
       'size' => 'big',
     ),
+
     'premiere_date' => array(
       'type' => 'varchar',
       'length' => '255',
