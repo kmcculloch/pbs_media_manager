@@ -1,0 +1,49 @@
+<?php
+
+/**
+ * @file
+ * PBS Media Manager Migration.
+ *
+ * Creates a mechanism to migrate COVE API Player fields to Media Manager
+ * Player fields.
+ */
+
+define('PBS_MEDIA_MANAGER_PLAYER_MIGRATION', 'admin/config/media/pbs_media_manager/cove_migration');
+
+
+/**
+ * Implements hook_menu().
+ */
+function pbs_media_manager_migrate_menu() {
+  
+  $items = array();
+  
+  $items[PBS_MEDIA_MANAGER_PLAYER_MIGRATION] = array(
+    'title' => 'Migrate Cove Player fields',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('pbs_media_manager_migrate_form'),
+    'access arguments' => array('administer pbs_media_manager'),
+    'file' => 'pbs_media_manager_migrate.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  return $items;
+}
+
+
+/**
+ * Helper function to find old cove fields.
+ */
+function _pbs_media_manager_migrate_find_cove_fields() {
+  // Load the fields using Cove Player module.
+  $include_additional = array(
+    'include_inactive' => TRUE,
+  );
+  $params = array(
+    'module' => 'cove_api_player',
+    'type' => 'pbs_video',
+  );
+  
+  return field_read_fields($params, $include_additional);
+  
+}

@@ -1,0 +1,6 @@
+name = PBS Media Manager Migration
+description = Provides a mechanism to migrate COVE API Player fields to Media Manager Player fields.
+core = 7.x
+dependencies[] = pbs_media_manager_player
+dependencies[] = cove_api_player
+package = Media

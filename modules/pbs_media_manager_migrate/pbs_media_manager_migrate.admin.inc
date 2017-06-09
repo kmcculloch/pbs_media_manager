@@ -8,7 +8,7 @@
 /**
  * Implements hook_form().
  */
-function pbs_media_manager_player_migration_form() {
+function pbs_media_manager_migrate_form() {
 
   $form = array();
 
@@ -20,10 +20,12 @@ function pbs_media_manager_player_migration_form() {
     '#markup' => t('Migrate your existing Cove API player fields to PBS Media manager. Backup the database first. <strong>This cannot be undone.</strong>'),
   );
 
+  /*
   $form['start_migration_button'] = array(
     '#type' => 'submit',
     '#value' => t('Migrate Field(s)'),
   );
+  */
 
   return $form;
 
@@ -32,11 +34,11 @@ function pbs_media_manager_player_migration_form() {
 /**
  * Implements hook_form_submit().
  */
-function pbs_media_manager_player_migration_form_submit(&$form, $form_state) {
+function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
 
   // Load the fields using Cove Player module.
   module_load_include('modules', 'pbs_media_manager_player');
-  $fields = _pbs_media_manager_player_find_cove_fields();
+  $fields = _pbs_media_manager_migrate_find_cove_fields();
   
   if (empty($fields)) {
     drupal_set_message(t('No existing Cove fields found.'), 'error', FALSE);
@@ -48,7 +50,7 @@ function pbs_media_manager_player_migration_form_submit(&$form, $form_state) {
   $operations = array();
   foreach (array_keys($fields) as $field) {
     $operations[] = array(
-      'pbs_media_manager_player_migrate_batch_operation',
+      'pbs_media_manager_migrate_batch_operation',
       array('field' => $field),
     );
   }
@@ -56,8 +58,8 @@ function pbs_media_manager_player_migration_form_submit(&$form, $form_state) {
   $batch = array(
     'title' => t('Media Manager Player Migration'),
     'operations' => $operations,
-    'finished' => 'pbs_media_manager_player_migrate_batch_finish',
-    'file' => drupal_get_path('module', 'pbs_media_manager_player') . "/pbs_media_manager_player.inc",
+    'finished' => 'pbs_media_manager_migrate_batch_finish',
+    'file' => drupal_get_path('module', 'pbs_media_manager_migrate') . "/pbs_media_manager_migrate.inc",
   );
 
   // Initate batch.
