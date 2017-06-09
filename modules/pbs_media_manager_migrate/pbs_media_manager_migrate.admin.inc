@@ -8,26 +8,85 @@
 /**
  * Implements hook_form().
  */
-function pbs_media_manager_migrate_form() {
+function pbs_media_manager_migrate_form(array $form, array &$form_state) {
+  
+  // Load the fields using Cove Player module.
+  $cove_fields = _pbs_media_manager_migrate_find_cove_fields();
+  
+  if (empty($cove_fields)) {
+    drupal_set_message(t('No existing Cove fields found.'), 'error', FALSE);
+  }
+  else {
+    // Get the list of fields that are available for migration, either as
+    // targets or destinations
+    $options = _pbs_media_manager_migrate_options($cove_fields);
+    
+    // Segment out just the bundles (content types) for winnowing.
+    
+    $bundles = array('select' => t('-- Select a content type --'));
+    $bundles += drupal_map_assoc(array_keys($options));
 
-  $form = array();
+    // Get the selected bundle, if it exists
+    $bundle_selected = isset($form_state['values']['bundle']) ? $form_state['values']['bundle'] : key($bundles);
+  
+    $form['description_wrapper'] = array(
+      '#type' => 'container',
+    );
+    $form['description_wrapper']['description'] = array(
+      '#type' => 'markup',
+      '#markup' => t('Migrate your existing Cove API player fields to PBS Media manager. Backup the database first. <strong>This cannot be undone.</strong>'),
+    );
+    
+    $form['bundle'] = array(
+      '#type' => 'select',
+      '#title' => 'Content Type',
+      '#options' => $bundles,
+      '#default_value' => $bundle_selected,
+      '#ajax' => array(
+        'callback' => 'pbs_media_manager_migrate_fields_replace',
+        'event' => 'change',
+        'wrapper' => 'fields-replace',
+      ),
+      '#description' => t('Select the COVE field you would like to migrate.'),
+    );
+    
+    $form['fields'] = array(
+      '#type' => 'fieldset',
+      '#title' => 'Migration settings',
+      '#prefix' => '<div id="fields-replace">',
+      '#suffix' => '</div>',
+    );
+    
+    $form['fields']['cove_field'] = array(
+      '#type' => 'select',
+      '#title' => 'COVE Field',
+      '#options' => _pbs_media_manager_migrate_get_options('cove_api_player', $bundle_selected, $options),
+      '#default_value' => isset($form_state['values']['cove_field']) ? $form_state['values']['cove_field'] : '',
+      '#description' => t('Select the Media Manager field you would like to migrate to.'),
+    );
+  
+    $form['fields']['media_manager_field'] = array(
+      '#type' => 'select',
+      '#title' => 'Media Manager Field',
+      '#options' => _pbs_media_manager_migrate_get_options('pbs_media_manager_player',
+        $bundle_selected, $options),
+      '#default_value' => isset($form_state['values']['media_manager_field']) ? $form_state['values']['media_manager_field'] : '',
+      '#description' => t('Select the Media Manager field you would like to migrate to.'),
+    );
+    
+    // TODO: Add a submit button. And actual migration functionality.
+    
+    
+    /*
+    $form['start_migration_button'] = array(
+      '#type' => 'submit',
+      '#value' => t('Migrate Field(s)'),
+    );
+    */
+  
+    return $form;
+  }
 
-  $form['description_wrapper'] = array(
-    '#type' => 'container',
-  );
-  $form['description_wrapper']['description'] = array(
-    '#type' => 'markup',
-    '#markup' => t('Migrate your existing Cove API player fields to PBS Media manager. Backup the database first. <strong>This cannot be undone.</strong>'),
-  );
-
-  /*
-  $form['start_migration_button'] = array(
-    '#type' => 'submit',
-    '#value' => t('Migrate Field(s)'),
-  );
-  */
-
-  return $form;
 
 }
 
