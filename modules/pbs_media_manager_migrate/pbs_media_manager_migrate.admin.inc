@@ -48,6 +48,8 @@ function pbs_media_manager_migrate_form(array $form, array &$form_state) {
         'wrapper' => 'fields-replace',
       ),
       '#description' => t('Select the COVE field you would like to migrate.'),
+      '#required' => TRUE,
+      '#element_validate' => array('pbs_media_manager_migrate_element_validate'),
     );
     
     $form['fields'] = array(
@@ -55,14 +57,23 @@ function pbs_media_manager_migrate_form(array $form, array &$form_state) {
       '#title' => 'Migration settings',
       '#prefix' => '<div id="fields-replace">',
       '#suffix' => '</div>',
+      
     );
     
     $form['fields']['cove_field'] = array(
       '#type' => 'select',
       '#title' => 'COVE Field',
       '#options' => _pbs_media_manager_migrate_get_options('cove_api_player', $bundle_selected, $options),
-      '#default_value' => isset($form_state['values']['cove_field']) ? $form_state['values']['cove_field'] : '',
+      '#default_value' => isset($form_state['values']['cove_field']) ? $form_state['values']['cove_field'] : 'select',
       '#description' => t('Select the Media Manager field you would like to migrate to.'),
+      '#element_validate' => array('pbs_media_manager_migrate_element_validate'),
+      // TODO: Why no asterisk after options load?
+      '#states' => array(
+        'required' => array(
+          ':input[name="bundle"]' => array('filled' => TRUE),
+        ),
+      ),
+      
     );
   
     $form['fields']['media_manager_field'] = array(
@@ -70,31 +81,37 @@ function pbs_media_manager_migrate_form(array $form, array &$form_state) {
       '#title' => 'Media Manager Field',
       '#options' => _pbs_media_manager_migrate_get_options('pbs_media_manager_player',
         $bundle_selected, $options),
-      '#default_value' => isset($form_state['values']['media_manager_field']) ? $form_state['values']['media_manager_field'] : '',
+      '#default_value' => isset($form_state['values']['media_manager_field']) ? $form_state['values']['media_manager_field'] : 'select',
       '#description' => t('Select the Media Manager field you would like to migrate to.'),
+      '#element_validate' => array('pbs_media_manager_migrate_element_validate'),
+      // TODO: Why no asterisk after options load?
+      '#states' => array(
+        'required' => array(
+          ':input[name="bundle"]' => array('filled' => TRUE),
+        ),
+      ),
     );
     
-    // TODO: Add a submit button. And actual migration functionality.
-    
-    
-    /*
     $form['start_migration_button'] = array(
       '#type' => 'submit',
-      '#value' => t('Migrate Field(s)'),
+      '#value' => t('Migrate'),
     );
-    */
+    
   
     return $form;
   }
-
-
 }
 
 /**
  * Implements hook_form_submit().
  */
 function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
-
+  
+  //dpm('submitted!');
+  //dpm($form, 'form');
+  //dpm($form_state, 'form state');
+  /*
+  
   // Load the fields using Cove Player module.
   module_load_include('modules', 'pbs_media_manager_player');
   $fields = _pbs_media_manager_migrate_find_cove_fields();
@@ -123,5 +140,18 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
 
   // Initate batch.
   batch_set($batch);
+  */
+}
 
+
+/**
+ * Validation for required select elements
+ *
+ * @param $element
+ * @param $form_state
+ */
+function pbs_media_manager_migrate_element_validate($element, &$form_state) {
+  if (empty($element['#value']) || $element['#value'] == 'select') {
+    form_error($element, t('%field is required.', array('%field' => $element['#title'])));
+  }
 }
