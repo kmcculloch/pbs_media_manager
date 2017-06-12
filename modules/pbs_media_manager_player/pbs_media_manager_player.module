@@ -225,7 +225,7 @@ function pbs_media_manager_player_field_presave($entity_type, $entity, $field,
 
     // sanitize the URL
     $url = check_plain(trim($item['url']));
-    $original_url = check_plain(trim($item['original_url']));
+    $original_url = isset($item['original_url']) ? check_plain(trim($item['original_url'])) : '';
     
     // if this is an update but the URL hasn't changed, we'll want to query
     // the asset and check that the slug hasn't changed

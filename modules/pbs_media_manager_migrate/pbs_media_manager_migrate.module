@@ -98,7 +98,6 @@ function _pbs_media_manager_migrate_prepare_fields($fields = NULL) {
     $field_instances = field_read_instances(array('field_name' => $field['field_name']), $include_additional = array('include_inactive'));
     
     foreach ($field_instances as $instance) {
-  
       // if it's a COVE field and doesn't have a migration flag, set it
       if ($field['module'] == 'cove_api_player' && !isset
         ($instance['migrated'])) {
@@ -106,18 +105,16 @@ function _pbs_media_manager_migrate_prepare_fields($fields = NULL) {
         field_update_instance($instance);
       }
       
-      // add the field to the options array, divided by bundle. only add
-      // non-migrated COVE fields
-      if ($field['module'] == 'pbs_media_manager_player'|| (isset($instance['migrated']) && $instance['migrated'] == FALSE)) {
-        $options[$instance['bundle']][$field['module']][$instance['field_name']] =
+      // add the field to the options array, divided by bundle.
+      $options[$instance['entity_type'] . ':' . $instance['bundle']][$field['module']][$instance['field_name']] =
           $instance['field_name'];
-      }
+
       
       
       
     }
   }
-  
+
   // clean up $options array so it only includes bundles with COVE fields.
   foreach ($options as $bundle => $option) {
     if (!isset($option['cove_api_player'])) {

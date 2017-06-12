@@ -106,10 +106,78 @@ function pbs_media_manager_migrate_form(array $form, array &$form_state) {
  * Implements hook_form_submit().
  */
 function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
+  //TODO: This should probably all be in a batch for performance.
   
-  //dpm('submitted!');
-  //dpm($form, 'form');
-  //dpm($form_state, 'form state');
+  // The bundle value is stored as entity_type:bundle. We need to split it up.
+  $bundle_info = explode(':', $form_state['values']['bundle']);
+  $entity_type = $bundle_info[0];
+  $bundle = $bundle_info[1];
+  
+  $cove_field = $form_state['values']['cove_field'];
+  $media_manager_field = $form_state['values']['media_manager_field'];
+
+  
+  // Find all entities of the selected bundle where the COVE field isn't empty.
+  $entityQuery = new EntityFieldQuery();
+  $entities = $entityQuery->entityCondition('entity_type', $entity_type)
+    ->propertyCondition('type', $bundle)
+    ->fieldCondition($cove_field, 'object_id', 'NULL', '!=')
+    ->execute();
+  
+  // Cycle through the returned entities
+  foreach ($entities as $entity_type => $entity) {
+    foreach ($entity as $item) {
+      // Load each entity
+      $loaded = entity_load($entity_type, array($item->nid));
+      
+      foreach ($loaded as $node) {
+
+        // load the field data
+        $fields = field_get_items($entity_type, $node, $cove_field);
+        foreach ($fields as $delta => $field) {
+          
+          // call the API using the Legacy Assets Endpoint
+          $resource = 'assets/legacy';
+          $resourceId = NULL;
+          $parentResource = NULL;
+          $legacyID = $field['object_id'];
+          
+          $response = pbs_media_manager_request($resource, $resourceId, $parentResource, $legacyID);
+          
+          // if there's no response, show an error message.
+          if (!$response) {
+            form_set_error('no_response', t('Request failed most likely due to invalid request. Check recent log entries for more detail'));
+          }
+          else {
+            
+            // construct the video's URL from the slug
+            $slug = $response['data']['attributes']['slug'];
+            
+            // TODO: Replace 'beta' with 'www' once new PBS.org goes live.
+            $url = 'http://beta.pbs.org/video/' . $slug;
+  
+            $field_language = field_language('node', $node, $cove_field);
+            $node->$media_manager_field[$field_language][$delta]['url'] = $url;
+            
+            
+          }
+        }
+        
+        if (!empty($node->$media_manager_field[$field_language])) {
+          // update the node
+          node_save($node);
+          drupal_set_message(t('Updated Node %node.', array('%node' =>
+            $node->nid)));
+        }
+      }
+      
+      
+    }
+    
+  }
+  
+  
+  
   /*
   
   // Load the fields using Cove Player module.
@@ -153,5 +221,46 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
 function pbs_media_manager_migrate_element_validate($element, &$form_state) {
   if (empty($element['#value']) || $element['#value'] == 'select') {
     form_error($element, t('%field is required.', array('%field' => $element['#title'])));
+  }
+}
+
+
+
+/**
+ * Validation for the form to check that the chosen Media Manager field has
+ * enough values allowed to hold the Cove Field items.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function pbs_media_manager_migrate_form_validate($form, &$form_state) {
+
+  // Only run this if cove_field and media_manager_field have values.
+  if (!empty($form_state['values']['cove_field']) && !empty($form_state['values']['media_manager_field']) && $form_state['values']['cove_field'] != 'select' && $form_state['values']['media_manager_field'] != 'select') {
+  
+    $cove_field = $form_state['values']['cove_field'];
+    $media_manager_field = $form_state['values']['media_manager_field'];
+  
+    $cove_field_info = field_info_field($cove_field);
+    $media_manager_field_info = field_info_field($media_manager_field);
+    
+    // if $media_manager_field's cardinality is unlimited, no error.
+    if ($media_manager_field_info['cardinality'] == '-1') {
+      $error = FALSE;
+    }
+    // if $cove_field's cardinality is unlimited, but $media_manager_field's is
+    // not, validation fails.
+    elseif ($cove_field_info['cardinality'] == '-1') {
+      $error = TRUE;
+    }
+    // if $cove_field cardinality's is less than $media_manager_field's
+    // cardinality, validation fails.
+    elseif ($media_manager_field_info['cardinality'] < $cove_field_info['cardinality']) {
+      $error = TRUE;
+    }
+    
+    if ($error) {
+      form_set_error($media_manager_field, t('%mm_field must be able to hold at least as many items as %cove_field. Check the field settings, then try again.', array('%mm_field' => $media_manager_field, '%cove_field' => $cove_field)));
+    }
   }
 }
