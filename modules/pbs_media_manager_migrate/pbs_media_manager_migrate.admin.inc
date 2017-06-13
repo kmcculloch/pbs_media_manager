@@ -117,98 +117,31 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
   $media_manager_field = $form_state['values']['media_manager_field'];
 
   
-  // Find all entities of the selected bundle where the COVE field isn't empty.
-  $entityQuery = new EntityFieldQuery();
-  $entities = $entityQuery->entityCondition('entity_type', $entity_type)
-    ->propertyCondition('type', $bundle)
-    ->fieldCondition($cove_field, 'object_id', 'NULL', '!=')
-    ->execute();
-  
-  // Cycle through the returned entities
-  foreach ($entities as $entity_type => $entity) {
-    foreach ($entity as $item) {
-      // Load each entity
-      $loaded = entity_load($entity_type, array($item->nid));
-      
-      foreach ($loaded as $node) {
 
-        // load the field data
-        $fields = field_get_items($entity_type, $node, $cove_field);
-        foreach ($fields as $delta => $field) {
-          
-          // call the API using the Legacy Assets Endpoint
-          $resource = 'assets/legacy';
-          $resourceId = NULL;
-          $parentResource = NULL;
-          $legacyID = $field['object_id'];
-          
-          $response = pbs_media_manager_request($resource, $resourceId, $parentResource, $legacyID);
-          
-          // if there's no response, show an error message.
-          if (!$response) {
-            form_set_error('no_response', t('Request failed most likely due to invalid request. Check recent log entries for more detail'));
-          }
-          else {
-            
-            // construct the video's URL from the slug
-            $slug = $response['data']['attributes']['slug'];
-            
-            // TODO: Replace 'beta' with 'www' once new PBS.org goes live.
-            $url = 'http://beta.pbs.org/video/' . $slug;
   
-            $field_language = field_language('node', $node, $cove_field);
-            $node->$media_manager_field[$field_language][$delta]['url'] = $url;
-            
-            
-          }
-        }
-        
-        if (!empty($node->$media_manager_field[$field_language])) {
-          // update the node
-          node_save($node);
-          drupal_set_message(t('Updated Node %node.', array('%node' =>
-            $node->nid)));
-        }
-      }
-      
-      
-    }
-    
-  }
-  
-  
-  
-  /*
-  
-  // Load the fields using Cove Player module.
-  module_load_include('modules', 'pbs_media_manager_player');
-  $fields = _pbs_media_manager_migrate_find_cove_fields();
-  
-  if (empty($fields)) {
-    drupal_set_message(t('No existing Cove fields found.'), 'error', FALSE);
-    drupal_goto('admin/config/media/pbs_media_manager', array(), 301);
-  }
-  
-
   // Prepare the batch.
   $operations = array();
-  foreach (array_keys($fields) as $field) {
-    $operations[] = array(
-      'pbs_media_manager_migrate_batch_operation',
-      array('field' => $field),
-    );
-  }
 
-  $batch = array(
-    'title' => t('Media Manager Player Migration'),
-    'operations' => $operations,
-    'finished' => 'pbs_media_manager_migrate_batch_finish',
-    'file' => drupal_get_path('module', 'pbs_media_manager_migrate') . "/pbs_media_manager_migrate.inc",
+  $operations[] = array(
+    'pbs_media_manager_player_migrate_batch_operation',
+    array('type' => $entity_type, 'bundle' => $bundle, 'cove_field' => $cove_field, 'media_manager_field' =>
+  $media_manager_field),
   );
 
+  
+  $batch = array(
+    'title' => t('Media Manager Player Migration'),
+    'init_message' => t('Beginning migration...'),
+    'error_message' => t('Whoops!'),
+    'operations' => $operations,
+    'finished' => 'pbs_media_manager_player_migrate_batch_finish',
+    'file' => drupal_get_path('module', 'pbs_media_manager_migrate') . "/pbs_media_manager_migrate.inc",
+  );
+  
   // Initate batch.
   batch_set($batch);
-  */
+  
+
 }
 
 

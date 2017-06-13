@@ -27,7 +27,61 @@ function pbs_media_manager_migrate_menu() {
     'type' => MENU_LOCAL_TASK,
   );
   
+  
+  $items['admin/config/media/pbs_media_manager/foo'] = array(
+    'title' => 'COVE Import',
+    'page callback' => '_pbs_media_manager_player_migrate_foo',
+    'access arguments' => array('administer pbs_media_manager'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  
   return $items;
+}
+
+function _pbs_media_manager_player_migrate_foo() {
+
+  $entity_type = 'node';
+  $bundle = 'cove';
+  $cove_field = 'field_cove_video';
+  
+  // Find all entities of the selected bundle where the COVE field isn't empty.
+  $entityQuery = new EntityFieldQuery();
+  $query = $entityQuery->entityCondition('entity_type', $entity_type)
+    ->propertyCondition('type', $bundle)
+    ->fieldCondition($cove_field, 'object_id', 'NULL', '!=')
+    ->propertyOrderBy('nid', 'ASC');
+  
+  $count = $entityQuery;
+  $max = $count->count()->execute();
+  
+  
+  $results = $query->execute();
+  
+  
+  
+  dpm($max, 'count');
+  
+  dpm($results, 'results');
+  
+  $context['sandbox']['current_node'] = 0;
+  $limit = 10;
+  
+  $query = $query->propertyCondition('nid',
+    $context['sandbox']['current_node'], '>')
+    ->range(0, $limit);
+  
+  $more_results = $query->execute();
+  
+  
+  dpm($more_results, 'results');
+  
+  
+
+      
+        
+        
+return 'foo';
+        
 }
 
 

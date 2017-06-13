@@ -11,65 +11,137 @@
  * Batch operation to migrate COVE API Player fields to Media Manager Player
  * fields.
  *
- * @param $field_name
+ * @param $entity_type
+ * @param $bundle
+ * @param $cove_field
+ * @param $media_manager_field
  * @param $context
  *
  */
-function pbs_media_manager_player_migrate_batch_operation($field_name,
-  &$context) {
-  // load field via field_read_field() setting
-  // $include_additional['include_inactive'] to TRUE to also pull inactive
-  // fields
-  $field = field_read_field($field_name, $include_additional = array('include_inactive'));
-  
-  // update field array to swap module
-  $field['module'] = 'pbs_media_manager_player';
-  
-  // update the field
-  field_update_field($field);
-
-  // load field instances via field_read_instances() setting
-  // $include_additional['include_inactive'] to TRUE to also pull inactive
-  // fields
-  $field_instances = field_read_instances(array('field_name' => $field_name), $include_additional = array('include_inactive'));
+function pbs_media_manager_player_migrate_batch_operation(
+  $entity_type, $bundle, $cove_field, $media_manager_field, &$context) {
   
   if (!isset($context['sandbox']['progress'])) {
+    // Find all entities of the selected bundle where the COVE field isn't empty.
+    $entityQuery = new EntityFieldQuery();
+    $query = $entityQuery->entityCondition('entity_type', $entity_type)
+      ->propertyCondition('type', $bundle)
+      ->fieldCondition($cove_field, 'object_id', 'NULL', '!=')
+      ->propertyOrderBy('nid', 'ASC')
+      ->count();
+  
     $context['sandbox']['progress'] = 0;
-    $context['sandbox']['max'] = count($field_instances);
+    $context['sandbox']['current_node'] = 0;
+    $context['sandbox']['max'] = $query;
   }
   
-  // Update each field instance to swap widget module and type and display
-  // formatter and module, then update the instance.
-  foreach ($field_instances as $instance) {
+  
+  $limit = 30;
+  
+  
+  // Find entities of the selected bundle where the COVE field isn't empty
+  // for this batch.
+  $entityQuery = new EntityFieldQuery();
+  $query = $entityQuery->entityCondition('entity_type', $entity_type)
+    ->propertyCondition('type', $bundle)
+    ->fieldCondition($cove_field, 'object_id', 'NULL', '!=')
+    ->propertyOrderBy('nid', 'ASC')
+    ->propertyCondition('nid',
+      $context['sandbox']['current_node'], '>')
+    ->range(0, $limit);
+  
+  $entities = $query->execute();
 
-    $instance['widget']['module'] = 'pbs_media_manager_player';
-    $instance['widget']['type'] = 'pbs_media_id';
+  foreach ($entities as $entity_type => $entity) {
+  
+    foreach ($entity as $item) {
     
-    foreach ($instance['display'] as &$display) {
-      $display['type'] = 'pbs_media_manager_player_formatter';
-      $display['module'] = 'pbs_media_manager_player';
-    }
-
-    field_update_instance($instance);
-    $context['sandbox']['progress']++;
+      // Currently, this only works with nodes. Submit a patch for other
+      // entity types.
+      if ($entity_type == 'node') {
+        // Load each entity
+        $loaded_node = entity_load($entity_type, array($item->nid));
+      
+        foreach ($loaded_node as $node) {
+          // get the field language
+          $field_language = field_language('node', $node, $cove_field);
+        
+          // load the field data
+          $fields = field_get_items($entity_type, $node, $cove_field);
+          foreach ($fields as $delta => $field) {
+          
+            // call the API using the Legacy Assets Endpoint
+            $resource = 'assets/legacy';
+            $resourceId = NULL;
+            $parentResource = NULL;
+            $legacyID = $field['object_id'];
+          
+            $response =
+              pbs_media_manager_request($resource, $resourceId, $parentResource,
+                $legacyID);
+          
+            // if there's no response, show an error message.
+            if (!$response) {
+              form_set_error('no_response',
+                t('Request failed most likely due to invalid request. Check recent log entries for more detail'));
+            }
+            else {
+            
+              // construct the video's URL from the slug
+              $slug = $response['data']['attributes']['slug'];
+            
+              // TODO: Replace 'beta' with 'www' once new PBS.org goes live.
+              $url = 'http://beta.pbs.org/video/' . $slug;
+            
+            
+              $node->$media_manager_field[$field_language][$delta]['url'] =
+                $url;
+            
+            
+            }
+          }
+        
+          if (!empty($node->$media_manager_field[$field_language])) {
+            // update the node
+            node_save($node);
+            drupal_set_message(t('Updated Node %node.', array(
+              '%node' =>
+                $node->nid
+            )));
   
-    // Inform the batch engine that we are not finished,
-    // and provide an estimation of the completion level we reached.
-    if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
-      $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+            $context['sandbox']['current_node'] = $node->nid;
+            $context['sandbox']['progress']++;
+            
+          }
+        
+        }
+      
+      
+      }
+    
     }
+    
+    
   }
+  
+  // Inform the batch engine that we are not finished,
+  // and provide an estimation of the completion level we reached.
+  if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
+    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+  }
+  
   
 }
 
 
-function pbs_media_manager_player_migrate_batch_finish($success, $results,
+function pbs_media_manager_player_migrate_batch_finish($success,
+  $results,
   $operations) {
   
   if ($success) {
     drupal_set_message('Success!');
-    dpm($results, 'results');
-    drupal_goto('admin/config/media/pbs_media_manager', array(), 301);
+
+    drupal_goto('admin/config/media/pbs_media_manager/cove_migration');
   }
   else {
     // An error occurred.
