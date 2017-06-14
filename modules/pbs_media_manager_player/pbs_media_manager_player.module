@@ -251,7 +251,7 @@ function pbs_media_manager_player_field_presave($entity_type, $entity, $field,
       
       // there's no way to send this back to the validator, so display a message
       $node = l($entity->title, $entity->path['source']);
-      drupal_set_message(t('%name: %url on !node did not return a valid response from the PBS Media Manager API. You may want to check that the URL is correct.', array('%name' => $instance['label'], '%url' => $url, '!node' => $node)), 'warning');
+      drupal_set_message(t('%name: %url on !node did not return a valid response from the PBS Media Manager API. You may want to check that the URL is correct and the video is published.', array('%name' => $instance['label'], '%url' => $url, '!node' => $node)), 'warning');
       
     }
     
