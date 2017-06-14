@@ -134,16 +134,19 @@ class PbsMediaShowEntity extends Entity {
    *
    * @param int $count
    *   The number of episodes to retrieve.
+   *
+   * @return array
+   *   Returns an array of Episode records.
    */
   public function getLatestEpisodes($count) {
     $seasons = $this->getSeasons();
 
-    $total = $seasons['meta']['pagination']['count'];
+    $total = count($seasons);
     $episodes = array();
 
     // Sort the seasons by ordinal value.
     usort($seasons, function ($a, $b) {
-      return $a['attributes']['ordinal'] > $b['attributes']['ordinal'];
+      return $a['attributes']['ordinal'] < $b['attributes']['ordinal'];
     });
 
     // For each seasons load the list of episodes from MM and build up the
@@ -157,8 +160,8 @@ class PbsMediaShowEntity extends Entity {
         // Load the asset list for each episode to find the player and links.
         $episode_assets = pbs_media_manager_request('asset', $episode['id'], 'episode');
 
-        foreach ($episode_assts as $asset) {
-          if ($asset['object_type'] == 'full_length') {
+        foreach ($episode_assets as $asset) {
+          if ($asset['attributes']['object_type'] == 'full_length') {
             $episode['player'] = $asset;
           }
         }
