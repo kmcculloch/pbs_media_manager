@@ -35,6 +35,9 @@ function pbs_media_manager_player_migrate_batch_operation(
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['current_node'] = 0;
     $context['sandbox']['max'] = $query;
+    $context['results']['updated'] = array();
+    $context['results']['errors'] = array();
+
   }
   
   // Limit the batch to 30 items so it doesn't time out.
@@ -95,17 +98,48 @@ function pbs_media_manager_player_migrate_batch_operation(
               // TODO: Replace 'beta' with 'www' once new PBS.org goes live.
               $url = 'http://beta.pbs.org/video/' . $slug;
             
-            
-              $node->$media_manager_field[$field_language][$delta]['url'] =
-                $url;
-            
-            
+              // map the results to the field elements
+              $node->$media_manager_field[$field_language][$delta] = array(
+                'url' => $url,
+                'original_url' => $url,
+                'asset_id' => $response['data']['id'],
+                'slug' => $slug,
+                'title' => $response['data']['attributes']['title'],
+                'description' => $response['data']['attributes']['description_long'],
+                'legacy_id' => $legacyID,
+                'premiere_date' => $response['data']['attributes']['premiered_on'],
+                'encore_date' => $response['data']['attributes']['encored_on'],
+              );
+              
+              // if the video isn't published, we need to store an error for
+              // display after the operation is complete.
+              if (isset($response['data']['attributes']['publish_state']) &&
+                empty($response['data']['attributes']['publish_state'])) {
+                
+                // if an error for this video doesn't exist yet, create it.
+                if (!isset($context['results']['errors'][$legacyID])) {
+                  $context['results']['errors'][$legacyID] = array(
+                    'cove id' => $legacyID,
+                    'video title' => $response['data']['attributes']['title'],
+                    'generated url' => $url,
+                  );
+                }
+                
+                // add this instance of the video to the error.
+                $context['results']['errors'][$legacyID]['instances'][] =
+                  array(
+                  'nid' => $node->nid,
+                  'node title' => $node->title,
+                );
+              }
             }
           }
         
           if (!empty($node->$media_manager_field[$field_language])) {
             // update the node
             node_save($node);
+            $context['results']['updated'][] = $node->nid;
+            
             
             // update the current node and the progress
             $context['sandbox']['current_node'] = $node->nid;
@@ -145,9 +179,21 @@ function pbs_media_manager_player_migrate_batch_finish($success,
   $operations) {
   
   if ($success) {
-    drupal_set_message('Success!');
+    drupal_get_messages('warning');
+    
+    $migrated = count($results['updated']);
+    drupal_set_message('Migration complete! ' . $migrated . ' items were migrated.');
+    
+    if (count($results['errors'])) {
+      
+      //TODO: Theme this pretty.
+      $list = '<pre>' . print_r($results['errors'], 1) . '</pre>';
+      $message = t('The following videos are not available in Media Manager. !list', array('!list' => $list));
+      
+      drupal_set_message($message, 'warning');
+      
+    }
 
-    drupal_goto('admin/config/media/pbs_media_manager/cove_migration');
   }
   else {
     // An error occurred.
