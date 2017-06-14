@@ -22,20 +22,22 @@ function pbs_media_manager_player_migrate_batch_operation(
   $entity_type, $bundle, $cove_field, $media_manager_field, &$context) {
   
   if (!isset($context['sandbox']['progress'])) {
-    // Find all entities of the selected bundle where the COVE field isn't empty.
+    // Count all entities of the selected bundle where the COVE field isn't
+    // empty.
     $entityQuery = new EntityFieldQuery();
     $query = $entityQuery->entityCondition('entity_type', $entity_type)
       ->propertyCondition('type', $bundle)
       ->fieldCondition($cove_field, 'object_id', 'NULL', '!=')
       ->propertyOrderBy('nid', 'ASC')
-      ->count();
-  
+      ->count()
+      ->execute();
+
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['current_node'] = 0;
     $context['sandbox']['max'] = $query;
   }
   
-  
+  // Limit the batch to 30 items so it doesn't time out.
   $limit = 30;
   
   
@@ -104,11 +106,8 @@ function pbs_media_manager_player_migrate_batch_operation(
           if (!empty($node->$media_manager_field[$field_language])) {
             // update the node
             node_save($node);
-            drupal_set_message(t('Updated Node %node.', array(
-              '%node' =>
-                $node->nid
-            )));
-  
+            
+            // update the current node and the progress
             $context['sandbox']['current_node'] = $node->nid;
             $context['sandbox']['progress']++;
             
@@ -134,6 +133,13 @@ function pbs_media_manager_player_migrate_batch_operation(
 }
 
 
+/**
+ * Batch 'finished' callback
+ *
+ * @param $success
+ * @param $results
+ * @param $operations
+ */
 function pbs_media_manager_player_migrate_batch_finish($success,
   $results,
   $operations) {
