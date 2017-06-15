@@ -17,7 +17,8 @@ class PbsMediaShowEntityController extends EntityAPIController {
    * @param null $langcode
    * @param array $content
    *
-   * @return array
+   * @return \Entity
+   *   Returns the new entity object.
    */
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
 

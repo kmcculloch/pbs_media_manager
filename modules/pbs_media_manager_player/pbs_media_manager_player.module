@@ -54,18 +54,16 @@ function pbs_media_manager_player_field_widget_info() {
 
 /**
  * Implements hook_field_widget_form().
- *
  */
 function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
 
   switch ($instance['widget']['type']) {
 
-    case 'pbs_media_url' :
+    case 'pbs_media_url':
       $element['url'] = array(
         '#type' => 'textfield',
         '#title' => t('Video URL'),
-        '#default_value' => isset($items[$delta]['url']) ?
-          $items[$delta]['url'] : '',
+        '#default_value' => isset($items[$delta]['url']) ? $items[$delta]['url'] : '',
         '#size' => 60,
         '#maxlength' => 255,
         '#required' => $element['#required'],
@@ -73,8 +71,7 @@ function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field
 
       $element['original_url'] = array(
         '#type' => 'hidden',
-        '#value' => isset($items[$delta]['url']) ?
-          $items[$delta]['url'] : '',
+        '#value' => isset($items[$delta]['url']) ? $items[$delta]['url'] : '',
       );
 
       $element['api_data'] = array(
@@ -86,8 +83,7 @@ function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field
       $element['api_data']['slug'] = array(
         '#type' => 'textfield',
         '#title' => t('Slug'),
-        '#default_value' => isset($items[$delta]['slug']) ?
-          $items[$delta]['slug'] : '',
+        '#default_value' => isset($items[$delta]['slug']) ? $items[$delta]['slug'] : '',
         '#size' => 60,
         '#maxlength' => 256,
         '#disabled' => TRUE,
@@ -96,8 +92,7 @@ function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field
       $element['api_data']['asset_id'] = array(
         '#type' => 'textfield',
         '#title' => t('Asset ID'),
-        '#default_value' => isset($items[$delta]['asset_id']) ?
-          $items[$delta]['asset_id'] : '',
+        '#default_value' => isset($items[$delta]['asset_id']) ? $items[$delta]['asset_id'] : '',
         '#size' => 60,
         '#maxlength' => 256,
         '#disabled' => TRUE,
@@ -106,8 +101,7 @@ function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field
       $element['api_data']['legacy_id'] = array(
         '#type' => 'textfield',
         '#title' => t('Legacy ID'),
-        '#default_value' => isset($items[$delta]['legacy_id']) ?
-          $items[$delta]['legacy_id'] : '',
+        '#default_value' => isset($items[$delta]['legacy_id']) ? $items[$delta]['legacy_id'] : '',
         '#size' => 60,
         '#maxlength' => 256,
         '#disabled' => TRUE,
@@ -116,8 +110,7 @@ function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field
       $element['api_data']['title'] = array(
         '#type' => 'textfield',
         '#title' => t('Asset Title'),
-        '#default_value' => isset($items[$delta]['title']) ?
-          $items[$delta]['title'] : '',
+        '#default_value' => isset($items[$delta]['title']) ? $items[$delta]['title'] : '',
         '#size' => 60,
         '#maxlength' => 256,
         '#disabled' => TRUE,
@@ -126,29 +119,25 @@ function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field
       $element['api_data']['description'] = array(
         '#type' => 'textarea',
         '#title' => t('Description'),
-        '#default_value' => isset($items[$delta]['description']) ?
-          $items[$delta]['description'] : '',
+        '#default_value' => isset($items[$delta]['description']) ? $items[$delta]['description'] : '',
         '#disabled' => TRUE,
       );
 
       $element['api_data']['premiere_date'] = array(
         '#type' => 'date',
         '#title' => t('Premiere Date'),
-        '#default_value' => isset($items[$delta]['premiere_date']) ?
-          date_parse($items[$delta]['premiere_date']) : '',
+        '#default_value' => isset($items[$delta]['premiere_date']) ? date_parse($items[$delta]['premiere_date']) : '',
         '#disabled' => TRUE,
       );
 
       $element['api_data']['encore_date'] = array(
         '#type' => 'date',
         '#title' => t('Encore Date'),
-        '#default_value' => isset($items[$delta]['encore_date']) ?
-          date_parse($items[$delta]['encore_date']) : '',
+        '#default_value' => isset($items[$delta]['encore_date']) ? date_parse($items[$delta]['encore_date']) : '',
         '#disabled' => TRUE,
       );
 
       break;
-
 
   }
 
@@ -163,10 +152,10 @@ function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field
 function pbs_media_manager_player_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
 
   foreach ($items as $delta => $item) {
-    // sanitize the URL
+    // Sanitize the URL.
     $url = check_plain(trim($item['url']));
 
-    // check to see if the URL is valid and absolute
+    // Check to see if the URL is valid and absolute.
     if (!empty($url) && !valid_url($url, $absolute = TRUE)) {
       $errors[$field['field_name']][$langcode][$delta][] = array(
         'error' => 'pbs_media_manager_player_invalid_url',
@@ -179,7 +168,7 @@ function pbs_media_manager_player_field_validate($entity_type, $entity, $field, 
 
         $path_array = explode('/', $parsed_url['path']);
 
-        // paths should have the structure /video/[slug]
+        // Paths should have the structure /video/[slug].
         if (count($path_array < 3) && $path_array[1] != 'video') {
           $errors[$field['field_name']][$langcode][$delta][] = array(
             'error' => 'pbs_media_manager_player_malformed_url',
@@ -189,7 +178,6 @@ function pbs_media_manager_player_field_validate($entity_type, $entity, $field, 
       }
     }
 
-
   }
 }
 
@@ -198,11 +186,11 @@ function pbs_media_manager_player_field_validate($entity_type, $entity, $field, 
  */
 function pbs_media_manager_player_field_widget_error($element, $error, $form, &$form_state) {
 
-  //dpm($element, 'element');
   switch ($error['error']) {
     case 'pbs_media_manager_player_invalid_url':
       form_error($element, $error['message']);
       break;
+
     case 'pbs_media_manager_player_malformed_url':
       form_error($element, $error['message']);
       break;
@@ -214,31 +202,30 @@ function pbs_media_manager_player_field_widget_error($element, $error, $form, &$
  *
  * Request the asset info from the API and save relevant data to the field.
  */
-function pbs_media_manager_player_field_presave($entity_type, $entity, $field,
-  $instance, $langcode, &$items) {
+function pbs_media_manager_player_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
 
-  // set the resource
+  // Set the resource.
   $resource = 'asset';
 
   foreach ($items as $delta => $item) {
 
-    // sanitize the URL
+    // Sanitize the URL.
     $url = check_plain(trim($item['url']));
     $original_url = isset($item['original_url']) ? check_plain(trim($item['original_url'])) : '';
 
-    // if this is an update but the URL hasn't changed, we'll want to query
-    // the asset and check that the slug hasn't changed
+    // If this is an update but the URL hasn't changed, we'll want to query
+    // the asset and check that the slug hasn't changed.
     if ($url == $original_url && !empty($item['api_data']['asset_id']) &&
       !empty($item['api_data']['slug'])) {
       $resourceID = $item['api_data']['asset_id'];
       $orig_slug = $item['api_data']['slug'];
     }
-    // otherwise, we need to parse the URL and extract the slug
+    // Otherwise, we need to parse the URL and extract the slug.
     else {
-      // parse the URL to get the path
+      // Parse the URL to get the path.
       $parsed_url = parse_url($url);
 
-      // find the slug
+      // Find the slug.
       $slug = basename($parsed_url['path']);
       $resourceID = $slug;
     }
@@ -248,16 +235,21 @@ function pbs_media_manager_player_field_presave($entity_type, $entity, $field,
     // If there's no ID in the response, this fails.
     if (!isset($response['data']['id'])) {
 
-      // there's no way to send this back to the validator, so display a message
+      // There's no way to send this back to the validator so display a message.
       $node = l($entity->title, $entity->path['source']);
-      drupal_set_message(t('%name: %url on !node did not return a valid response from the PBS Media Manager API. You may want to check that the URL is correct and the video is published.', array('%name' => $instance['label'], '%url' => $url, '!node' => $node)), 'warning');
-
+      drupal_set_message(t(
+        '%name: %url on !node did not return a valid response from the PBS Media Manager API. You may want to check that the URL is correct and the video is published.',
+        array(
+          '%name' => $instance['label'],
+          '%url' => $url,
+          '!node' => $node,
+        )), 'warning');
     }
 
-    // Otherwise, save the results to the field
+    // Otherwise, save the results to the field.
     else {
 
-      // sanitize the results
+      // Sanitize the results.
       $asset_id = check_plain($response['data']['id']);
       $legacy_id = check_plain($response['data']['attributes']['legacy_tp_media_id']);
       $slug = check_plain($response['data']['attributes']['slug']);
@@ -315,7 +307,6 @@ function pbs_media_manager_player_field_formatter_info() {
 function pbs_media_manager_player_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
 
-
   foreach ($items as $delta => $item) {
     $asset_id = $item['asset_id'];
 
@@ -361,7 +352,7 @@ function pbs_media_manager_player_field_formatter_view($entity_type, $entity, $f
         $element[$delta]['#attached'] = array(
           'css' => array(
             drupal_get_path('module', 'pbs_media_manager_player') .
-            '/pbs_media_manager_player.css'
+            '/pbs_media_manager_player.css',
           ),
         );
       }

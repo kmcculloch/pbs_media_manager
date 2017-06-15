@@ -536,7 +536,6 @@ function pbs_media_manager_api_ui_resource_select_change_ajax_callback(array $fo
       // No parent options when Franchises are the resource.
       break;
 
-
     case 'collection':
       $options = array(
         'none' => t('None'),
@@ -652,7 +651,7 @@ function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form
       // format.
       $timezone = new DateTimeZone('UTC');
       $period = $form['parameters']['since']['#value'];
-      $datetime = new DateTime($period, $timezone );
+      $datetime = new DateTime($period, $timezone);
       $form['parameters']['since']['#value'] = $datetime->format('Y-m-d\TH:i:s.u\Z');
 
     }
@@ -676,7 +675,6 @@ function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form
       if ($form['parameters'][$option]['#value']) {
         // TODO: This doesn't work without editing the API Client. Is that
         // acceptable?
-
         // Reindex the array so that we can iterate through it.
         $values = array_values($form['parameters'][$option]['#value']);
 
@@ -696,8 +694,6 @@ function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form
         }
       }
     }
-
-
 
   }
   // Filters.
@@ -725,6 +721,17 @@ function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form
 
 }
 
+/**
+ * Helper function to format responses from the API.
+ *
+ * @param array $response
+ *   Response array from the API.
+ * @param string $format
+ *   The requested format: dpm, table, and simple (print_r).
+ *
+ * @return string
+ *   Rendered markup string for returning to browser.
+ */
 function _pbs_media_manager_ui_prep_results($response, $format) {
 
   switch ($format) {
@@ -743,7 +750,16 @@ function _pbs_media_manager_ui_prep_results($response, $format) {
 
 }
 
-function _pbs_media_manager_ui_results_table($raw_array) {
+/**
+ * Helper function to build a table render array.
+ *
+ * @param array $raw_array
+ *   The array being turned into a table.
+ *
+ * @return array
+ *   Render array for a table.
+ */
+function _pbs_media_manager_ui_results_table(array $raw_array) {
   $rows = array();
   $endpoint = variable_get('pbs_media_manager_endpoint');
   foreach ($raw_array as $key => $row) {

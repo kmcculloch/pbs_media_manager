@@ -8,7 +8,7 @@
  * Player fields.
  */
 
-define('PBS_MEDIA_MANAGER_PLAYER_MIGRATION', 'admin/config/media/pbs_media_manager/cove_migration');
+define('PBS_MEDIA_MANAGER_MIGRATE_ADMIN', 'admin/config/media/pbs_media_manager/cove_migration');
 
 /**
  * Implements hook_menu().
@@ -17,7 +17,7 @@ function pbs_media_manager_migrate_menu() {
 
   $items = array();
 
-  $items[PBS_MEDIA_MANAGER_PLAYER_MIGRATION] = array(
+  $items[PBS_MEDIA_MANAGER_MIGRATE_ADMIN] = array(
     'title' => 'Migrate Cove Player fields',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('pbs_media_manager_migrate_form'),
@@ -28,8 +28,6 @@ function pbs_media_manager_migrate_menu() {
 
   return $items;
 }
-
-
 
 /**
  * Helper function to find old COVE fields.
@@ -68,16 +66,20 @@ function _pbs_media_manager_migrate_find_media_manager_fields() {
 /**
  * Helper function to prepare fields for migration form.
  *
- * @param $cove_fields = array of cove fields.
+ * @param array $cove_fields
+ *   Array of cove fields.
+ *
+ * @return array
+ *   An array of fields prepared for migration.
  */
-function _pbs_media_manager_migrate_options($cove_fields) {
-  // load the Media Manager fields
+function _pbs_media_manager_migrate_options(array $cove_fields) {
+  // Load the Media Manager fields.
   $mm_fields = _pbs_media_manager_migrate_find_media_manager_fields();
 
-  // combine the two field arrays
+  // Combine the two field arrays.
   $all_fields = $cove_fields + $mm_fields;
 
-  // build the options list
+  // Build the options list.
   $options = _pbs_media_manager_migrate_prepare_fields($all_fields);
 
   return $options;
@@ -87,34 +89,37 @@ function _pbs_media_manager_migrate_options($cove_fields) {
 /**
  * Helper function to prepare fields for migration form.
  *
- * @param $fields = array of fields.
+ * @param array|null $fields
+ *   Array of fields.
+ *
+ * @return array
+ *   An array of field options.
  */
 function _pbs_media_manager_migrate_prepare_fields($fields = NULL) {
   $options = array();
 
   foreach ($fields as $field) {
-    // Load the field instances
+    // Load the field instances.
     $field_instances = field_read_instances(array('field_name' => $field['field_name']), $include_additional = array('include_inactive'));
 
     foreach ($field_instances as $instance) {
-      // if it's a COVE field and doesn't have a migration flag, set it
-      if ($field['module'] == 'cove_api_player' && !isset
-        ($instance['migrated'])) {
+      // If it's a COVE field and doesn't have a migration flag, set it.
+      if ($field['module'] == 'cove_api_player' && !isset($instance['migrated'])) {
         $instance['migrated'] = FALSE;
         field_update_instance($instance);
       }
 
-      // add the field to the options array, divided by bundle.
+      // Add the field to the options array, divided by bundle.
       $options[$instance['entity_type'] . ':' . $instance['bundle']][$field['module']][$instance['field_name']] =
           $instance['field_name'];
     }
   }
 
-  // clean up $options array so it only includes bundles with COVE fields.
+  // Clean up $options array so it only includes bundles with COVE fields.
   foreach ($options as $bundle => $option) {
     if (!isset($option['cove_api_player'])) {
       unset($options[$bundle]);
-     }
+    }
   }
 
   return $options;
@@ -126,8 +131,7 @@ function _pbs_media_manager_migrate_prepare_fields($fields = NULL) {
  * @return array
  *   Renderable array (the dropdown)
  */
-function pbs_media_manager_migrate_fields_replace($form,
-  $form_state) {
+function pbs_media_manager_migrate_fields_replace($form, $form_state) {
   return $form['fields'];
 }
 
@@ -137,10 +141,10 @@ function pbs_media_manager_migrate_fields_replace($form,
  * @param $module
  * @param $bundle_selected
  * @param $options
+ *
  * @return array
  */
-function _pbs_media_manager_migrate_get_options($module, $bundle_selected,
-  $options) {
+function _pbs_media_manager_migrate_get_options($module, $bundle_selected, $options) {
 
   if (isset($options[$bundle_selected][$module])) {
     $list = array('select' => t('-- Select a field --'));
