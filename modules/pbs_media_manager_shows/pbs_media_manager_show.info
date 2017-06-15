@@ -5,5 +5,5 @@ dependencies[] = pbs_media_manager
 dependencies[] = views
 dependencies[] = entity
 configure = admin/config/media/pbs_shows
-package = media
+package = Media
 core = 7.x
