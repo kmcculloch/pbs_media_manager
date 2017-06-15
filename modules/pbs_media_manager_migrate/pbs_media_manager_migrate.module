@@ -10,14 +10,13 @@
 
 define('PBS_MEDIA_MANAGER_PLAYER_MIGRATION', 'admin/config/media/pbs_media_manager/cove_migration');
 
-
 /**
  * Implements hook_menu().
  */
 function pbs_media_manager_migrate_menu() {
-  
+
   $items = array();
-  
+
   $items[PBS_MEDIA_MANAGER_PLAYER_MIGRATION] = array(
     'title' => 'Migrate Cove Player fields',
     'page callback' => 'drupal_get_form',
@@ -26,7 +25,7 @@ function pbs_media_manager_migrate_menu() {
     'file' => 'pbs_media_manager_migrate.admin.inc',
     'type' => MENU_LOCAL_TASK,
   );
-  
+
   return $items;
 }
 
@@ -44,11 +43,10 @@ function _pbs_media_manager_migrate_find_cove_fields() {
     'module' => 'cove_api_player',
     'type' => 'pbs_video',
   );
-  
-  return field_read_fields($params, $include_additional);
-  
-}
 
+  return field_read_fields($params, $include_additional);
+
+}
 
 /**
  * Helper function to find new Media Manager fields.
@@ -62,9 +60,9 @@ function _pbs_media_manager_migrate_find_media_manager_fields() {
     'module' => 'pbs_media_manager_player',
     'type' => 'pbs_media',
   );
-  
+
   return field_read_fields($params, $include_additional);
-  
+
 }
 
 /**
@@ -75,15 +73,15 @@ function _pbs_media_manager_migrate_find_media_manager_fields() {
 function _pbs_media_manager_migrate_options($cove_fields) {
   // load the Media Manager fields
   $mm_fields = _pbs_media_manager_migrate_find_media_manager_fields();
-  
+
   // combine the two field arrays
   $all_fields = $cove_fields + $mm_fields;
-  
+
   // build the options list
   $options = _pbs_media_manager_migrate_prepare_fields($all_fields);
-  
+
   return $options;
-  
+
 }
 
 /**
@@ -93,11 +91,11 @@ function _pbs_media_manager_migrate_options($cove_fields) {
  */
 function _pbs_media_manager_migrate_prepare_fields($fields = NULL) {
   $options = array();
-  
+
   foreach ($fields as $field) {
     // Load the field instances
     $field_instances = field_read_instances(array('field_name' => $field['field_name']), $include_additional = array('include_inactive'));
-    
+
     foreach ($field_instances as $instance) {
       // if it's a COVE field and doesn't have a migration flag, set it
       if ($field['module'] == 'cove_api_player' && !isset
@@ -105,14 +103,10 @@ function _pbs_media_manager_migrate_prepare_fields($fields = NULL) {
         $instance['migrated'] = FALSE;
         field_update_instance($instance);
       }
-      
+
       // add the field to the options array, divided by bundle.
       $options[$instance['entity_type'] . ':' . $instance['bundle']][$field['module']][$instance['field_name']] =
           $instance['field_name'];
-
-      
-      
-      
     }
   }
 
@@ -122,7 +116,7 @@ function _pbs_media_manager_migrate_prepare_fields($fields = NULL) {
       unset($options[$bundle]);
      }
   }
-  
+
   return $options;
 }
 
@@ -147,7 +141,7 @@ function pbs_media_manager_migrate_fields_replace($form,
  */
 function _pbs_media_manager_migrate_get_options($module, $bundle_selected,
   $options) {
-  
+
   if (isset($options[$bundle_selected][$module])) {
     $list = array('select' => t('-- Select a field --'));
     $list += $options[$bundle_selected][$module];

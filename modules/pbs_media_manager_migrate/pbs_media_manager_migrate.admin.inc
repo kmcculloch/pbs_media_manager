@@ -9,26 +9,25 @@
  * Implements hook_form().
  */
 function pbs_media_manager_migrate_form(array $form, array &$form_state) {
-  
+
   // Load the fields using Cove Player module.
   $cove_fields = _pbs_media_manager_migrate_find_cove_fields();
-  
+
   if (empty($cove_fields)) {
     drupal_set_message(t('No existing Cove fields found.'), 'error', FALSE);
   }
   else {
     // Get the list of fields that are available for migration, either as
-    // targets or destinations
+    // targets or destinations.
     $options = _pbs_media_manager_migrate_options($cove_fields);
-    
+
     // Segment out just the bundles (content types) for winnowing.
-    
     $bundles = array('select' => t('-- Select a content type --'));
     $bundles += drupal_map_assoc(array_keys($options));
 
     // Get the selected bundle, if it exists
     $bundle_selected = isset($form_state['values']['bundle']) ? $form_state['values']['bundle'] : key($bundles);
-  
+
     $form['description_wrapper'] = array(
       '#type' => 'container',
     );
@@ -36,7 +35,7 @@ function pbs_media_manager_migrate_form(array $form, array &$form_state) {
       '#type' => 'markup',
       '#markup' => t('Migrate your existing Cove API player fields to PBS Media manager. Backup the database first. <strong>This cannot be undone.</strong>'),
     );
-    
+
     $form['bundle'] = array(
       '#type' => 'select',
       '#title' => 'Content Type',
@@ -51,15 +50,15 @@ function pbs_media_manager_migrate_form(array $form, array &$form_state) {
       '#required' => TRUE,
       '#element_validate' => array('pbs_media_manager_migrate_element_validate'),
     );
-    
+
     $form['fields'] = array(
       '#type' => 'fieldset',
       '#title' => 'Migration settings',
       '#prefix' => '<div id="fields-replace">',
       '#suffix' => '</div>',
-      
+
     );
-    
+
     $form['fields']['cove_field'] = array(
       '#type' => 'select',
       '#title' => 'COVE Field',
@@ -73,9 +72,9 @@ function pbs_media_manager_migrate_form(array $form, array &$form_state) {
           ':input[name="bundle"]' => array('filled' => TRUE),
         ),
       ),
-      
+
     );
-  
+
     $form['fields']['media_manager_field'] = array(
       '#type' => 'select',
       '#title' => 'Media Manager Field',
@@ -91,13 +90,13 @@ function pbs_media_manager_migrate_form(array $form, array &$form_state) {
         ),
       ),
     );
-    
+
     $form['start_migration_button'] = array(
       '#type' => 'submit',
       '#value' => t('Migrate'),
     );
-    
-  
+
+
     return $form;
   }
 }
@@ -107,18 +106,18 @@ function pbs_media_manager_migrate_form(array $form, array &$form_state) {
  */
 function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
   //TODO: This should probably all be in a batch for performance.
-  
+
   // The bundle value is stored as entity_type:bundle. We need to split it up.
   $bundle_info = explode(':', $form_state['values']['bundle']);
   $entity_type = $bundle_info[0];
   $bundle = $bundle_info[1];
-  
+
   $cove_field = $form_state['values']['cove_field'];
   $media_manager_field = $form_state['values']['media_manager_field'];
 
-  
 
-  
+
+
   // Prepare the batch.
   $operations = array();
 
@@ -128,7 +127,7 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
   $media_manager_field),
   );
 
-  
+
   $batch = array(
     'title' => t('Media Manager Player Migration'),
     'init_message' => t('Beginning migration...'),
@@ -137,10 +136,10 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
     'finished' => 'pbs_media_manager_player_migrate_batch_finish',
     'file' => drupal_get_path('module', 'pbs_media_manager_migrate') . "/pbs_media_manager_migrate.inc",
   );
-  
+
   // Initate batch.
   batch_set($batch);
-  
+
 
 }
 
@@ -170,13 +169,13 @@ function pbs_media_manager_migrate_form_validate($form, &$form_state) {
 
   // Only run this if cove_field and media_manager_field have values.
   if (!empty($form_state['values']['cove_field']) && !empty($form_state['values']['media_manager_field']) && $form_state['values']['cove_field'] != 'select' && $form_state['values']['media_manager_field'] != 'select') {
-  
+
     $cove_field = $form_state['values']['cove_field'];
     $media_manager_field = $form_state['values']['media_manager_field'];
-  
+
     $cove_field_info = field_info_field($cove_field);
     $media_manager_field_info = field_info_field($media_manager_field);
-    
+
     // if $media_manager_field's cardinality is unlimited, no error.
     if ($media_manager_field_info['cardinality'] == '-1') {
       $error = FALSE;
@@ -191,7 +190,7 @@ function pbs_media_manager_migrate_form_validate($form, &$form_state) {
     elseif ($media_manager_field_info['cardinality'] < $cove_field_info['cardinality']) {
       $error = TRUE;
     }
-    
+
     if ($error) {
       form_set_error($media_manager_field, t('%mm_field must be able to hold at least as many items as %cove_field. Check the field settings, then try again.', array('%mm_field' => $media_manager_field, '%cove_field' => $cove_field)));
     }

@@ -191,5 +191,5 @@ function pbs_media_manager_api_connection_test() {
 
   }
   watchdog('pbs_media_manager', $message, array(), WATCHDOG_NOTICE, PBS_MEDIA_MANAGER_SETTING_URL);
-
+  return FALSE;
 }
