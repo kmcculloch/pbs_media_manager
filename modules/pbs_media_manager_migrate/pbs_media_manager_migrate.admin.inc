@@ -122,8 +122,7 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
       'type' => $entity_type,
       'bundle' => $bundle,
       'cove_field' => $cove_field,
-      'media_manager_field' =>
-      $media_manager_field,
+      'media_manager_field' => $media_manager_field,
     ),
   );
 
@@ -136,7 +135,7 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
     'file' => drupal_get_path('module', 'pbs_media_manager_migrate') . "/pbs_media_manager_migrate.inc",
   );
 
-  // Initate batch.
+  // Initiate batch.
   batch_set($batch);
 
 }
