@@ -293,13 +293,16 @@ function _pbs_media_manager_show_update_entity($prog_id, $raw_entity) {
   }
 
   $show->title = $raw_entity['attributes']['title'];
-  $show->link = $raw_entity['attributes']['links'][0]['value'];
   $show->resource_uri = $raw_entity['links']['self'];
   $show->slug = $raw_entity['attributes']['slug'];
   $show->nola_root = $raw_entity['attributes']['nola'];
   $show->short_description = $raw_entity['attributes']['description_short'];
   $show->long_description = $raw_entity['attributes']['description_long'];
   $show->images = serialize($raw_entity['attributes']['images']);
+
+  if (isset($raw_entity['attributes']['links'][0]) && !empty($raw_entity['attributes']['links'][0]['value'])) {
+    $show->link = $raw_entity['attributes']['links'][0]['value'];
+  }
 
   $show->save();
 
