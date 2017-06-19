@@ -215,7 +215,8 @@ function pbs_media_manager_show_importer_form_submit($form, &$form_state) {
   }
 
   // Offset.
-  if ($form_state['values']['limit'] > 0) {
+  if ($form_state['values']['limit'] > 0 && $form_state['values']['limit'] <=
+    count($response)) {
     $remaining = (int) $form_state['values']['limit'] - 1;
   }
   else {
