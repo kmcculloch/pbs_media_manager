@@ -150,6 +150,12 @@ function pbs_media_manager_request($resource, $resourceID = '', $parentResource 
     // If we're getting a list the function name is plural.
     if (!$resourceID) {
       $function .= 's';
+      // If we're getting a list of shows or franchises, we need to make sure we
+      // pass the args where the resourceID would normally go.
+      $special_cases = array('franchises', 'shows');
+      if (in_array($function, $special_cases) && !empty($args)) {
+        $resourceID = $args;
+      }
     }
   }
 
