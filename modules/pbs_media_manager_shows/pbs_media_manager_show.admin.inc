@@ -270,14 +270,13 @@ function pbs_media_manager_show_importer_form_validate($form, &$form_state) {
   }
   
   // For Genre IDs and Slugs, if none are selected we must pass a true NULL.
-  if ($values['genre-id'] == 0) {
+  if (empty($values['genre-id'])) {
     $form_state['values']['genre-id'] = NULL;
   }
   
-  if ($values['genre-slug'] === 0) {
+  if (empty($values['genre-slug'])) {
     $form_state['values']['genre-slug'] = NULL;
   }
-  
 
 }
 
