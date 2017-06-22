@@ -1,6 +1,7 @@
 name = PBS Media Manager Show
 description = Provides Media Manager shows as Drupal entities.
 files[] = includes/pbs_media_manager_show.class.inc
+files[] = views/pbs_media_manager_show_handler_filter_genres.inc
 dependencies[] = pbs_media_manager
 dependencies[] = views
 dependencies[] = entity
