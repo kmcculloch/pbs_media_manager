@@ -407,6 +407,11 @@ function _pbs_media_manager_show_update_entity($prog_id, $raw_entity) {
   if (isset($raw_entity['attributes']['links'][0]) && !empty($raw_entity['attributes']['links'][0]['value'])) {
     $show->link = $raw_entity['attributes']['links'][0]['value'];
   }
+  
+  if (isset($raw_entity['attributes']['genre']['slug'])) {
+    $show->genre_slug = $raw_entity['attributes']['genre']['slug'];
+    $show->genre_title = $raw_entity['attributes']['genre']['title'];
+  }
 
   $show->save();
 
@@ -431,6 +436,8 @@ function _pbs_media_manager_show_create_entity($raw_entity) {
     'nola_root' => $raw_entity['attributes']['nola'],
     'short_description' => $raw_entity['attributes']['description_short'],
     'long_description' => $raw_entity['attributes']['description_long'],
+    'genre_slug' => $raw_entity['attributes']['genre']['slug'],
+    'genre_title' => $raw_entity['attributes']['genre']['title'],
     'images' => $raw_entity['attributes']['images'],
   );
   $show_entity = entity_create('pbs_media_manager_show', $values);

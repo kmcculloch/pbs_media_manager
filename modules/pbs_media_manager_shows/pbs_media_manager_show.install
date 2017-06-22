@@ -70,6 +70,18 @@ function pbs_media_manager_show_schema() {
         'not null' => FALSE,
         'default' => NULL,
       ),
+      'genre_slug' => array(
+        'description' => "Genre Slug",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'genre_title' => array(
+        'description' => "Genre Title",
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
       'images' => array(
         'description' => 'Stores serilaized references to show images.',
         'type' => 'blob',
