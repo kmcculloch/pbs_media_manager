@@ -274,7 +274,7 @@ function pbs_media_manager_show_importer_form_validate($form, &$form_state) {
     $form_state['values']['genre-id'] = NULL;
   }
   
-  if ($values['genre-slug'] == 0) {
+  if ($values['genre-slug'] === 0) {
     $form_state['values']['genre-slug'] = NULL;
   }
   
