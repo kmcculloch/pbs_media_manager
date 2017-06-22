@@ -84,7 +84,7 @@ function pbs_media_manager_show_importer_form($form, &$form_state) {
       'sort' => '',
     ),
   );
-
+  
   $values = variable_get('pbs_media_manager_show_import_filters', $defaults);
 
   $form = array();
@@ -133,8 +133,9 @@ function pbs_media_manager_show_importer_form($form, &$form_state) {
     '#default_value' => $values['parameters']['franchise-slug'],
   );
   $form['parameters']['genre-slug'] = array(
-    '#type' => 'textfield',
+    '#type' => 'select',
     '#title' => t('Genre Slug'),
+    '#options' => pbs_media_manager_show_genre_options('slug'),
     '#default_value' => $values['parameters']['genre-slug'],
   );
   $form['parameters']['franchise-id'] = array(
@@ -143,8 +144,9 @@ function pbs_media_manager_show_importer_form($form, &$form_state) {
     '#default_value' => $values['parameters']['franchise-id'],
   );
   $form['parameters']['genre-id'] = array(
-    '#type' => 'textfield',
+    '#type' => 'select',
     '#title' => t('Genre ID'),
+    '#options' => pbs_media_manager_show_genre_options('id'),
     '#default_value' => $values['parameters']['genre-id'],
   );
   $form['parameters']['page'] = array(
@@ -163,11 +165,102 @@ function pbs_media_manager_show_importer_form($form, &$form_state) {
 }
 
 /**
+ * Genre option select lists.
+ *
+ * @param string $type
+ *   'id' or 'slug'.
+ *
+ * @return array
+ *   Returns an array suitable for the select list options.
+ */
+/**
+ * Implements hook_action_info().
+ */
+function pbs_media_manager_show_genre_options($type = NULL) {
+  $genres = array();
+  
+  $genres[] = array(
+    'slug' => 'arts_and_music',
+    'id' => 'c52e4777-9649-4977-b13c-a3194c3e42fe',
+    'title' => 'Arts and Music',
+  );
+  
+  $genres[] = array(
+    'slug' => 'culture',
+    'id' => '9a9f5b68-539c-4aea-83cc-a3f8d67505a0',
+    'title' => 'Culture',
+  );
+  
+  $genres[] = array(
+    'slug' => 'drama',
+    'id' => 'a6c8f8a3-fd3a-4ffe-9a0d-d32e6e584d5d',
+    'title' => 'Drama',
+  );
+  
+  $genres[] = array(
+    'slug' => 'food',
+    'id' => '46578c3e-f467-4332-9400-959a31729a0f',
+    'title' => 'Food',
+  );
+  
+  $genres[] = array(
+    'slug' => 'history',
+    'id' => 'd68d138e-dae6-4fa9-9148-addc88fa6efb',
+    'title' => 'History',
+  );
+  
+  $genres[] = array(
+    'slug' => 'home_and_howto',
+    'id' => '313ba604-842f-434d-b40b-d6f31cc3cd1a',
+    'title' => 'Home and How To',
+  );
+  
+  $genres[] = array(
+    'slug' => 'indie_films',
+    'id' => '913015f1-c747-4109-a64b-4876c5929846',
+    'title' => 'Indie Films',
+  );
+  
+  $genres[] = array(
+    'slug' => 'news_and_public_affairs',
+    'id' => '32aabe94-4417-40a9-ab55-bd22707e275f',
+    'title' => 'News and Public Affairs',
+  );
+  
+  $genres[] = array(
+    'slug' => 'science_and_nature',
+    'id' => '09684cc5-9a7e-460f-841f-4d95987a8f53',
+    'title' => 'Science and Nature',
+  );
+  
+  $genre_slug_options = array('-- Select --');
+  $genre_id_options = array('-- Select --');
+  
+  foreach ($genres as $genre) {
+    $genre_slug_options[$genre['slug']] = $genre['title'] . ' (' . $genre['slug'] . ')';
+    $genre_id_options[$genre['id']] = $genre['title'] . ' (' . $genre['id'] .
+      ')';
+  }
+  
+  asort($genre_slug_options);
+  asort($genre_id_options);
+  
+  switch ($type) {
+    case 'id':
+      return $genre_id_options;
+    case 'slug':
+      return $genre_slug_options;
+    default:
+      break;
+  }
+}
+
+/**
  * Implements hook_form_validate().
  */
 function pbs_media_manager_show_importer_form_validate($form, &$form_state) {
   $values = $form_state['values'];
-
+  
   // Make sure the timeout is a number.
   if (!is_int((int) $values['limit'])) {
     form_set_error('limit', t('Limit must be an integer between -1-1000'));
@@ -175,6 +268,17 @@ function pbs_media_manager_show_importer_form_validate($form, &$form_state) {
   elseif ((int) $values['limit'] < -1 || (int) $values['limit'] >= 1000) {
     form_set_error('limit', t('Timeout must be an integer between -1-1000'));
   }
+  
+  // For Genre IDs and Slugs, if none are selected we must pass a true NULL.
+  if ($values['genre-id'] == 0) {
+    $form_state['values']['genre-id'] = NULL;
+  }
+  
+  if ($values['genre-slug'] == 0) {
+    $form_state['values']['genre-slug'] = NULL;
+  }
+  
+
 }
 
 /**
@@ -205,6 +309,7 @@ function pbs_media_manager_show_importer_form_submit($form, &$form_state) {
       $args[$label] = $value;
     }
   }
+  
   module_load_include('module', 'pbs_media_manager');
   $response = pbs_media_manager_request('show', '', '', '', $args, $cache_expire = 0);
 
