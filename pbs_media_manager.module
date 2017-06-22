@@ -152,7 +152,7 @@ function pbs_media_manager_request($resource, $resourceID = '', $parentResource 
       $function .= 's';
       // If we're getting a list of shows or franchises, we need to make sure we
       // pass the args where the resourceID would normally go.
-      $special_cases = array('franchises', 'shows');
+      $special_cases = array('get_franchises', 'get_shows');
       if (in_array($function, $special_cases) && !empty($args)) {
         $resourceID = $args;
       }
