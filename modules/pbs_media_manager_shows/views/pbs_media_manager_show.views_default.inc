@@ -36,6 +36,7 @@ function pbs_media_manager_show_views_default_views() {
     'title' => 'title',
     'nola_root' => 'nola_root',
     'slug' => 'slug',
+    'genre_title' => 'genre_title',
   );
   $handler->display->display_options['style_options']['default'] = 'title';
   $handler->display->display_options['style_options']['info'] = array(
@@ -67,6 +68,13 @@ function pbs_media_manager_show_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
+    'genre_title' => array(
+      'sortable' => 1,
+      'default_sort_order' => 'asc',
+      'align' => '',
+      'separator' => '',
+      'empty_column' => 0,
+    ),
   );
   /* Field: PBS Show: Pbs show ID */
   $handler->display->display_options['fields']['id']['id'] = 'id';
@@ -87,6 +95,11 @@ function pbs_media_manager_show_views_default_views() {
   $handler->display->display_options['fields']['slug']['id'] = 'slug';
   $handler->display->display_options['fields']['slug']['table'] = 'pbs_media_manager_shows';
   $handler->display->display_options['fields']['slug']['field'] = 'slug';
+  /* Field: PBS Show: Genre_title */
+  $handler->display->display_options['fields']['genre_title']['id'] = 'genre_title';
+  $handler->display->display_options['fields']['genre_title']['table'] = 'pbs_media_manager_shows';
+  $handler->display->display_options['fields']['genre_title']['field'] = 'genre_title';
+  $handler->display->display_options['fields']['genre_title']['label'] = 'Genre';
   /* Filter criterion: PBS Show: Label */
   $handler->display->display_options['filters']['title']['id'] = 'title';
   $handler->display->display_options['filters']['title']['table'] = 'pbs_media_manager_shows';
@@ -128,10 +141,24 @@ function pbs_media_manager_show_views_default_views() {
     2 => '2',
     1 => 0,
   );
+  /* Filter criterion: PBS Show: Genre_title */
+  $handler->display->display_options['filters']['genre_title']['id'] = 'genre_title';
+  $handler->display->display_options['filters']['genre_title']['table'] = 'pbs_media_manager_shows';
+  $handler->display->display_options['filters']['genre_title']['field'] = 'genre_title';
+  $handler->display->display_options['filters']['genre_title']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['genre_title']['expose']['operator_id'] = 'genre_title_op';
+  $handler->display->display_options['filters']['genre_title']['expose']['label'] = 'Genre';
+  $handler->display->display_options['filters']['genre_title']['expose']['operator'] = 'genre_title_op';
+  $handler->display->display_options['filters']['genre_title']['expose']['identifier'] = 'genre_title';
+  $handler->display->display_options['filters']['genre_title']['expose']['remember_roles'] = array(
+    2 => '2',
+    1 => 0,
+  );
   
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page');
   $handler->display->display_options['path'] = 'admin/content/pbs-shows';
+  
   
   
   $views[$view->name] = $view;
