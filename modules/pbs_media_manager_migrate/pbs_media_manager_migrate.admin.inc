@@ -113,35 +113,18 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
   $cove_field = $form_state['values']['cove_field'];
   $media_manager_field = $form_state['values']['media_manager_field'];
 
-  $entityQuery = new EntityFieldQuery();
-  $query = $entityQuery->entityCondition('entity_type', $entity_type)
-                       ->propertyCondition('type', $bundle)
-                       ->fieldCondition($cove_field, 'object_id', 'NULL', '!=');
-  $entities = $query->execute();
-
-  if (empty($entities[$entity_type])) {
-    drupal_set_message('No content using @field were found on @bundle.',
-                       array(
-                         '@field' => $cove_field,
-                         '@bundle' => $bundle,
-                       ));
-    return;
-  }
-
   // Prepare the batch.
   $operations = array();
 
-  foreach ($entities[$entity_type] as $entity) {
-    $operations[] = array(
-      'pbs_media_manager_player_migrate_batch_operation',
-      array(
-        'type' => $entity_type,
-        'cove_field' => $cove_field,
-        'media_manager_field' => $media_manager_field,
-        'entity_id' => $entity,
-      ),
-    );
-  }
+  $operations[] = array(
+    'pbs_media_manager_player_migrate_batch_operation',
+    array(
+      'type' => $entity_type,
+      'bundle' => $bundle,
+      'cove_field' => $cove_field,
+      'media_manager_field' => $media_manager_field,
+    ),
+  );
 
   $batch = array(
     'title' => t('Media Manager Player Migration'),
@@ -209,13 +192,7 @@ function pbs_media_manager_migrate_form_validate($form, &$form_state) {
     }
 
     if ($error) {
-      form_set_error($media_manager_field,
-                     t('%mm_field must be able to hold at least as many items as %cove_field. Check the field settings, then try again.',
-                       array(
-                         '%mm_field' => $media_manager_field,
-                         '%cove_field' => $cove_field,
-                       )
-                     ));
+      form_set_error($media_manager_field, t('%mm_field must be able to hold at least as many items as %cove_field. Check the field settings, then try again.', array('%mm_field' => $media_manager_field, '%cove_field' => $cove_field)));
     }
   }
 }
