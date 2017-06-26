@@ -23,8 +23,14 @@
  */
 function pbs_media_manager_player_migrate_batch_operation($entity_type, $cove_field, $media_manager_field, $entity_id, array &$context) {
 
+  // Initialize the progress counter.
+  if (!isset($context['sandbox']['progress'])) {
+    $context['sandbox']['progress'] = 0;
+  }
+
   // Load each entity.
-  $load = entity_load($entity_type, [$entity_id], $reset = TRUE);
+  $load = entity_load($entity_type, [$entity_id], $conditions = FALSE, $reset =
+    TRUE);
 
   if (empty($load)) {
     return;
@@ -50,12 +56,28 @@ function pbs_media_manager_player_migrate_batch_operation($entity_type, $cove_fi
 
     $response = pbs_media_manager_request($resource, $resourceId, $parentResource, $legacyID);
 
-    // If there's no response, show an error message.
+    // If there's no response at all, show an error message.
     if (!$response) {
       form_set_error(
         'no_response',
         t('Request failed most likely due to invalid request. Check recent log entries for more detail')
       );
+    }
+    // If there is a response, but there is no data attribute in the
+    // response, there' something wrong with the COVE ID and the migration
+    // fails.
+    elseif (!isset($response['data'])) {
+      // If an error for this video doesn't exist yet, create it.
+      if (!isset($context['results']['errors'][$legacyID])) {
+        $context['results']['errors'][$legacyID] = [
+          'cove id' => $legacyID,
+        ];
+      }
+
+      // Add this instance of the video to the error.
+      $context['results']['errors'][$legacyID]['instances'][] = [
+        'node title' => $active->title,
+      ];
     }
     else {
 
@@ -131,7 +153,7 @@ function pbs_media_manager_player_migrate_batch_finish($success,
     $migrated = count($results['updated']);
     drupal_set_message('Migration complete! ' . $migrated . ' items were migrated.');
 
-    if (count($results['errors'])) {
+    if (isset($results['errors'])) {
 
       // TODO: Theme this pretty.
       $list = '<pre>' . print_r($results['errors'], 1) . '</pre>';
