@@ -234,9 +234,11 @@ function pbs_media_manager_player_field_presave($entity_type, $entity, $field, $
 
     // If there's no ID in the response, this fails.
     if (!isset($response['data']['id'])) {
-
       // There's no way to send this back to the validator so display a message.
-      $node = l($entity->title, $entity->path['source']);
+      $node = $entity->title;
+      if (isset($entity->path)) {
+        $node = l($node, $entity->path['source']);
+      }
       drupal_set_message(t(
         '%name: %url on !node did not return a valid response from the PBS Media Manager API. You may want to check that the URL is correct and the video is published.',
         array(

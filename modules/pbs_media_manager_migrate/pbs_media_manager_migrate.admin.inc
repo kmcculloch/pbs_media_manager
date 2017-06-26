@@ -132,13 +132,18 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
   $operations = array();
 
   foreach ($entities[$entity_type] as $entity) {
+    // Extract the entity ID from the $entity object.  The ID will be the
+    // first item in the array.
+    $entity_ids = entity_extract_ids($entity_type, $entity);
+    $entity_id = $entity_ids[0];
+
     $operations[] = array(
       'pbs_media_manager_player_migrate_batch_operation',
       array(
         'type' => $entity_type,
         'cove_field' => $cove_field,
         'media_manager_field' => $media_manager_field,
-        'entity_id' => $entity,
+        'entity_id' => $entity_id,
       ),
     );
   }
