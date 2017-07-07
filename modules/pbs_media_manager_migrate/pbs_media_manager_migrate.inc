@@ -88,7 +88,7 @@ function pbs_media_manager_player_migrate_batch_operation($entity_type, $cove_fi
       $url = 'http://beta.pbs.org/video/' . $slug;
 
       // Map the results to the field elements.
-      $active->$media_manager_field[$field_language][$delta] = [
+      $active->{$media_manager_field}[$field_language][$delta] = [
         'url'           => $url,
         'original_url'  => $url,
         'asset_id'      => $response['data']['id'],
@@ -123,13 +123,18 @@ function pbs_media_manager_player_migrate_batch_operation($entity_type, $cove_fi
     }
   }
 
-  if (!empty($active->$media_manager_field[$field_language])) {
+  if (!empty($active->{$media_manager_field}[$field_language])) {
     // Update the node.
     entity_save($entity_type, $active);
-    $context['results']['updated'][] = $active->nid;
+    
+    // Get the entity agnostic id.
+    $entity_ids = entity_extract_ids($entity_type, $active);
+    $entity_id = $entity_ids[0];
+    
+    $context['results']['updated'][] = $entity_id;
 
     // Update the current node and the progress.
-    $context['sandbox']['current_node'] = $active->nid;
+    $context['sandbox']['current_node'] = $entity_id;
     $context['sandbox']['progress']++;
 
   }
