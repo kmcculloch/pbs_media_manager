@@ -2,32 +2,16 @@
 
 /**
  * @file
- * @file
  * Provides an EntityAPIController for our custom show entities.
  */
 
 /**
- * .
- *
  * Extending the EntityAPIController for the pbs_media_managerShow entity.
  */
 class PbsMediaShowEntityController extends EntityAPIController {
-  /**
-   * .
-   *
-   * Creates the content for this entity.
-   *
-   * @param $entity
-   * @param string $view_mode
-   * @param null $langcode
-   * @param array $content
-   *
-   * @return \Entity
-   *   Returns the new entity object.
-   */
 
   /**
-   *
+   * @inheritdoc
    */
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
     $build = parent::buildContent($entity, $view_mode, $langcode, $content);
@@ -36,21 +20,7 @@ class PbsMediaShowEntityController extends EntityAPIController {
   }
 
   /**
-   * .
-   *
-   * Overrides EntityAPIController::load().
-   *
-   * @param $ids
-   *   The list of IDs to load passed to parent.
-   * @param $conditions
-   *   List of conditions passed to parent .
-   *
-   * @returns array
-   *   Returns an array of entities.
-   */
-
-  /**
-   *
+   * @inheritdoc
    */
   public function load($ids = array(), $conditions = array()) {
     $entities = parent::load($ids, $conditions);
@@ -67,21 +37,7 @@ class PbsMediaShowEntityController extends EntityAPIController {
   }
 
   /**
-   * .
-   *
-   * Overrides EntityAPIControllerInterface.
-   *
-   * @param DatabaseTransaction $transaction
-   *   Optionally a DatabaseTransaction object to use. Allows overrides to pass
-   *   in their transaction object.
-   *
-   * @return
-   *   SAVED_NEW or SAVED_UPDATED is returned depending on the operation
-   *   performed.
-   */
-
-  /**
-   *
+   * @inheritdoc
    */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
     if (is_array($entity->images)) {
@@ -94,105 +50,60 @@ class PbsMediaShowEntityController extends EntityAPIController {
 }
 
 /**
- * .
- *
  * Project entity class extending the Entity class.
  */
 class PbsMediaShowEntity extends Entity {
-  /**
-   * .
-   *
-   * Change the default URI from default/id to pbs_show/id.
-   */
 
   /**
-   *
+   * Change the default URI from default/id to pbs_show/id.
    */
   protected function defaultUri() {
     return array('path' => 'pbs_show/' . $this->identifier());
   }
 
   /**
-   * .
-   *
    * Get the full detail record for this show.
-   */
-
-  /**
-   *
    */
   public function getFullDetail() {
     return $this->makeRequest();
   }
 
   /**
-   * .
-   *
    * Uses the Media Manager API to pull a list of seasons for this Show.
-   */
-
-  /**
-   *
    */
   public function getSeasons() {
     return $this->makeRequest('season');
   }
 
   /**
-   * .
-   *
    * Uses the Media Manager API to pull a list of assets for this Show.
-   */
-
-  /**
-   *
    */
   public function getAssets() {
     return $this->makeRequest('asset');
   }
 
   /**
-   * .
-   *
    * Uses the Media Manager API to pull a list of specials for this Show.
-   */
-
-  /**
-   *
    */
   public function getSpecials() {
     return $this->makeRequest('special');
   }
 
   /**
-   * .
-   *
    * Uses the Media Manager API to pull a list of collections for this Show.
-   */
-
-  /**
-   *
    */
   public function getCollections() {
     return $this->makeRequest('collection');
   }
 
   /**
-   * .
-   *
    * Uses the Media Manager API to pull a list of taxonomies for this Show.
-   */
-
-  /**
-   *
    */
   public function getTaxonomies() {
     return $this->makeRequest('taxonomies');
   }
 
   /**
-   * .
-   *
    * Uses the Media Manager API to build list of episodes for the Show.
    *
    * Media Manager does not directly provide a way to do this, so this requires
@@ -203,10 +114,6 @@ class PbsMediaShowEntity extends Entity {
    *
    * @return array
    *   Returns an array of Episode records.
-   */
-
-  /**
-   *
    */
   public function getLatestEpisodes($count) {
     $seasons = $this->getSeasons();
@@ -245,18 +152,12 @@ class PbsMediaShowEntity extends Entity {
   }
 
   /**
-   * .
-   *
    * Makes the actual request of the API.
    *
    * @param string $resource
    *   The primary resource to lookup. Defaults to the show itself.
    *
    * @return bool|object
-   */
-
-  /**
-   *
    */
   private function makeRequest($resource = 'show') {
     module_load_include('module', 'pbs_media_manager');
