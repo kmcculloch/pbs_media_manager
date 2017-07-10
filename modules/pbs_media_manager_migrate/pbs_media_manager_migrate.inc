@@ -156,15 +156,14 @@ function pbs_media_manager_player_migrate_batch_finish($success,
     drupal_get_messages('warning');
 
     $migrated = count($results['updated']);
-    drupal_set_message('Migration complete! ' . $migrated . ' items were migrated.');
+    drupal_set_message(t('Migration complete! %migrated items were migrated.', array('%migrated' => $migrated)));
 
     if (isset($results['errors'])) {
 
       // TODO: Theme this pretty.
       $list = '<pre>' . print_r($results['errors'], 1) . '</pre>';
-      $message = t('The following videos are not available in Media Manager. !list', array('!list' => $list));
-
-      drupal_set_message($message, 'warning');
+      $list = filter_xss($list, array('pre'));
+      drupal_set_message(t('The following videos are not available in Media Manager. !list', array('!list' => $list)), 'warning');
 
     }
 

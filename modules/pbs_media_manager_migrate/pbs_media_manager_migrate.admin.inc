@@ -120,11 +120,11 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
   $entities = $query->execute();
 
   if (empty($entities[$entity_type])) {
-    drupal_set_message('No content using @field were found on @bundle.',
+    drupal_set_message(t('No content using @field were found on @bundle.',
                        array(
                          '@field' => $cove_field,
                          '@bundle' => $bundle,
-                       ));
+                       )));
     return;
   }
 

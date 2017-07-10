@@ -56,7 +56,7 @@ function pbs_media_manager_player_field_widget_info() {
  * Implements hook_field_widget_form().
  */
 function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-
+  
   switch ($instance['widget']['type']) {
 
     case 'pbs_media_url':
@@ -76,7 +76,7 @@ function pbs_media_manager_player_field_widget_form(&$form, &$form_state, $field
 
       $element['api_data'] = array(
         '#type' => 'fieldset',
-        '#title' => $element['#title'],
+        '#title' => t('Video Information'),
         '#tree' => TRUE,
       );
 
