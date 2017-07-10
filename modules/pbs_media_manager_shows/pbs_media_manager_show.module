@@ -481,5 +481,3 @@ function pbs_media_manager_show_views_api() {
     'path' => drupal_get_path('module', 'pbs_media_manager_show') . '/views',
   );
 }
-
-

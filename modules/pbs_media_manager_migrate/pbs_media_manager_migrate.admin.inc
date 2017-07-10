@@ -115,8 +115,8 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
 
   $entityQuery = new EntityFieldQuery();
   $query = $entityQuery->entityCondition('entity_type', $entity_type)
-                       ->propertyCondition('type', $bundle)
-                       ->fieldCondition($cove_field, 'object_id', 'NULL', '!=');
+    ->propertyCondition('type', $bundle)
+    ->fieldCondition($cove_field, 'object_id', 'NULL', '!=');
   $entities = $query->execute();
 
   if (empty($entities[$entity_type])) {

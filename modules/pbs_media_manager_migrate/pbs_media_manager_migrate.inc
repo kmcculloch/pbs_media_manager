@@ -126,11 +126,11 @@ function pbs_media_manager_player_migrate_batch_operation($entity_type, $cove_fi
   if (!empty($active->{$media_manager_field}[$field_language])) {
     // Update the node.
     entity_save($entity_type, $active);
-    
+
     // Get the entity agnostic id.
     $entity_ids = entity_extract_ids($entity_type, $active);
     $entity_id = $entity_ids[0];
-    
+
     $context['results']['updated'][] = $entity_id;
 
     // Update the current node and the progress.
