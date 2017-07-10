@@ -158,6 +158,7 @@ class PbsMediaShowEntity extends Entity {
    *   The primary resource to lookup. Defaults to the show itself.
    *
    * @return bool|object
+   *   Returns the response object or False.
    */
   private function makeRequest($resource = 'show') {
     module_load_include('module', 'pbs_media_manager');

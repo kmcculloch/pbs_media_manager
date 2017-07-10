@@ -165,23 +165,22 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
 /**
  * Validation for required select elements.
  *
- * @param $element
+ * @param array $element
+ *   Form element array.
  * @param $form_state
+ *   Form state array.
  */
-function pbs_media_manager_migrate_element_validate($element, &$form_state) {
+function pbs_media_manager_migrate_element_validate(array $element, &$form_state) {
   if (empty($element['#value']) || $element['#value'] == 'select') {
     form_error($element, t('%field is required.', array('%field' => $element['#title'])));
   }
 }
 
 /**
- * Validation for the migration form.
+ * Implements hook_form_validate().
  *
- * Checks that the chosen Media Manager field has enough values allowed to hold
- * the Cove Field items.
- *
- * @param $form
- * @param $form_state
+ * Validation for the migration form. Checks that the chosen Media Manager
+ * field has enough values allowed to hold the Cove Field items.
  */
 function pbs_media_manager_migrate_form_validate($form, &$form_state) {
 

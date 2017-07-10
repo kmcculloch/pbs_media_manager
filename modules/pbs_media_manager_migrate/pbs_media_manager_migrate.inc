@@ -144,13 +144,14 @@ function pbs_media_manager_player_migrate_batch_operation($entity_type, $cove_fi
 /**
  * Batch 'finished' callback.
  *
- * @param $success
- * @param $results
- * @param $operations
+ * @param bool $success
+ *   Success flag.
+ * @param array $results
+ *   Results list.
+ * @param array $operations
+ *   Operations run.
  */
-function pbs_media_manager_player_migrate_batch_finish($success,
-  $results,
-  $operations) {
+function pbs_media_manager_player_migrate_batch_finish($success, array $results, array $operations) {
 
   if ($success) {
     drupal_get_messages('warning');
