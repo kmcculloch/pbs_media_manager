@@ -12,6 +12,9 @@ define('PBS_MEDIA_MANAGER_PRODUCTION_ENDPOINT', 'https://media.services.pbs.org/
  * Settings form for Media Manager API.
  */
 function pbs_media_manager_admin_site_settings() {
+  $pbs_media_manager_key = variable_get('pbs_media_manager_key');
+  $pbs_media_manager_secret = variable_get('pbs_media_manager_secret');
+
   $form = array();
   $form['pbs_media_manager_settings'] = array(
     '#title' => t('PBS Media Manager API Settings'),
@@ -21,13 +24,13 @@ function pbs_media_manager_admin_site_settings() {
     '#title' => t('API Key'),
     '#type' => 'textfield',
     '#required' => TRUE,
-    '#default_value' => variable_get('pbs_media_manager_key'),
+    '#default_value' => $pbs_media_manager_key,
   );
   $form['pbs_media_manager_settings']['pbs_media_manager_secret'] = array(
     '#title' => t('API Secret'),
     '#type' => 'textfield',
     '#required' => TRUE,
-    '#default_value' => variable_get('pbs_media_manager_secret'),
+    '#default_value' => $pbs_media_manager_secret,
   );
   $form['pbs_media_manager_settings']['pbs_media_manager_endpoint'] = array(
     '#title' => t('Media Manager Endpoint'),
@@ -40,7 +43,7 @@ function pbs_media_manager_admin_site_settings() {
   );
 
   // If there are settings, allow them to be tested by getting a station list.
-  $test_disabled = empty(variable_get('pbs_media_manager_key')) || empty(variable_get('pbs_media_manager_secret'));
+  $test_disabled = empty($pbs_media_manager_key) || empty($pbs_media_manager_secret);
   $form['pbs_media_manager_settings']['test_button'] = array(
     '#type' => 'submit',
     '#value' => t('Test Connection'),
