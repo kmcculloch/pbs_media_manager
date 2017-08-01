@@ -28,8 +28,10 @@ class PbsMediaShowEntityController extends EntityAPIController {
     // Unserialize the image field.
     if (is_array($entities)) {
       foreach ($entities as $show) {
-        $images = unserialize($show->images);
-        $show->images = $images;
+        if (!is_array($show->images)) {
+          $images = unserialize($show->images);
+          $show->images = $images;
+        }
       }
     }
 
@@ -111,20 +113,53 @@ class PbsMediaShowEntity extends Entity {
    *
    * @param int $count
    *   The number of episodes to retrieve.
+   * @param bool $include_specials
+   *   Include specials in the list of returned episodes.
    *
    * @return array
    *   Returns an array of Episode records.
    */
-  public function getLatestEpisodes($count) {
+  public function getLatestEpisodes($count, $include_specials = TRUE) {
     $seasons = $this->getSeasons();
 
-    $total = count($seasons);
+    if ($include_specials) {
+      $specials = $this->getSpecials();
+    }
+    else {
+      $specials = [];
+    }
+
+    // If there are no season records we get an array with meta data. We don't
+    // really care, so make it an empty array for easier processing.
+    if (isset($seasons['meta'])) {
+      $seasons = [];
+    }
+
+    // Same again specials.
+    if (isset($specials['meta'])) {
+      $specials = [];
+    }
+
+    $special_count = count($specials);
     $episodes = array();
 
     // Sort the seasons by ordinal value.
     usort($seasons, function ($a, $b) {
       return $a['attributes']['ordinal'] < $b['attributes']['ordinal'];
     });
+
+    // Sort Specials by Premeir date.
+    usort($specials, function($a, $b) {
+      return strtotime($a['attributes']['premiered_on']) < strtotime($b['attributes']['premiered_on']);
+    });
+
+    // If there are specials to merge into the list we need to track our
+    // progress through that list.
+    $special_index = 0;
+    $date_tracker = 0;
+    if ($special_count) {
+      $date_tracker = strtotime($specials[0]['attributes']['premiered_on']);
+    }
 
     // For each seasons load the list of episodes from MM and build up the.
     // The episode list until it reaches count.  Then return list.
@@ -135,6 +170,23 @@ class PbsMediaShowEntity extends Entity {
       foreach ($season_episodes as $episode) {
         // Load the asset list for each episode to find the player and links.
         $episode_assets = pbs_media_manager_request('asset', $episode['id'], 'episode');
+
+        // If we have specials check to see if currently tracked on should be
+        // merged in here.
+        if ($date_tracker) {
+          while ($date_tracker < strtotime($episode['attributes']['premiered_on'])) {
+            $episodes[] = $specials[$special_index];
+            $special_index++;
+            if ($special_index < $special_count) {
+              $date_tracker = strtotime($specials[$special_index]['attributes']['premiered_on']);
+            }
+
+            // Return the list if we've hit the limit.
+            if (count($episodes) >= $count) {
+              return $episodes;
+            }
+          }
+        }
 
         foreach ($episode_assets as $asset) {
           if ($asset['attributes']['object_type'] == 'full_length') {
@@ -149,6 +201,20 @@ class PbsMediaShowEntity extends Entity {
         }
       }
     }
+
+    // At this point, if there aren't enough shows on the list, add any
+    // remaining specials.
+    if ($include_specials) {
+      foreach ($specials as $special) {
+        $episodes[] = $special;
+        if (count($episodes) >= $count) {
+          return $episodes;
+        }
+      }
+    }
+
+    // Finally whatever we have is good enough.
+    return $episodes;
   }
 
   /**
