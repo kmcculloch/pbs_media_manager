@@ -149,7 +149,7 @@ class PbsMediaShowEntity extends Entity {
     });
 
     // Sort Specials by Premeir date.
-    usort($specials, function($a, $b) {
+    usort($specials, function ($a, $b) {
       return strtotime($a['attributes']['premiered_on']) < strtotime($b['attributes']['premiered_on']);
     });
 
@@ -168,14 +168,18 @@ class PbsMediaShowEntity extends Entity {
       $season_episodes = pbs_media_manager_request('episode', $season['id'], 'season', '', array('sort' => '-ordinal'));
 
       foreach ($season_episodes as $episode) {
-        // Load the asset list for each episode to find the player and links.
-        $episode_assets = pbs_media_manager_request('asset', $episode['id'], 'episode');
-
         // If we have specials check to see if currently tracked on should be
         // merged in here.
         if ($date_tracker) {
           while ($date_tracker < strtotime($episode['attributes']['premiered_on'])) {
-            $episodes[] = $specials[$special_index];
+            $special = $specials[$special_index];
+            $special_assets = pbs_media_manager_request('asset', $special['id'], 'special');
+            foreach ($special_assets as $asset) {
+              if ($asset['attributes']['object_type'] == 'full_length') {
+                $episode['player'] = $asset;
+              }
+            }
+            $episodes[] = $special;
             $special_index++;
             if ($special_index < $special_count) {
               $date_tracker = strtotime($specials[$special_index]['attributes']['premiered_on']);
@@ -187,6 +191,9 @@ class PbsMediaShowEntity extends Entity {
             }
           }
         }
+
+        // Load the asset list for each episode to find the player and links.
+        $episode_assets = pbs_media_manager_request('asset', $episode['id'], 'episode');
 
         foreach ($episode_assets as $asset) {
           if ($asset['attributes']['object_type'] == 'full_length') {
@@ -206,6 +213,13 @@ class PbsMediaShowEntity extends Entity {
     // remaining specials.
     if ($include_specials) {
       foreach ($specials as $special) {
+        $special_assets = pbs_media_manager_request('asset', $special['id'], 'special');
+        foreach ($special_assets as $asset) {
+          if ($asset['attributes']['object_type'] == 'full_length') {
+            $special['player'] = $asset;
+          }
+        }
+
         $episodes[] = $special;
         if (count($episodes) >= $count) {
           return $episodes;
