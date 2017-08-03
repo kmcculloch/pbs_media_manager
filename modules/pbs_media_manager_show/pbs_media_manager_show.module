@@ -102,8 +102,8 @@ function pbs_media_manager_show_entity_info() {
     'pbs_media_manager_show' => array(
       'label' => t('PBS Show'),
       'base table' => 'pbs_media_manager_shows',
-      'entity class' => 'PbsMediaShowEntity',
-      'controller class' => 'PbsMediaShowEntityController',
+      'entity class' => 'PbsMediaManagerShowEntity',
+      'controller class' => 'PbsMediaManagerShowEntityController',
       'module' => 'pbs_media_manager_show',
       'access callback' => 'pbs_media_manager_show_access_callback',
       'uri callback' => 'entity_class_uri',

@@ -8,7 +8,7 @@
 /**
  * Extending the EntityAPIController for the pbs_media_managerShow entity.
  */
-class PbsMediaShowEntityController extends EntityAPIController {
+class PbsMediaManagerShowEntityController extends EntityAPIController {
 
   /**
    * @inheritdoc
@@ -54,7 +54,7 @@ class PbsMediaShowEntityController extends EntityAPIController {
 /**
  * Project entity class extending the Entity class.
  */
-class PbsMediaShowEntity extends Entity {
+class PbsMediaManagerShowEntity extends Entity {
 
   /**
    * Change the default URI from default/id to pbs_show/id.

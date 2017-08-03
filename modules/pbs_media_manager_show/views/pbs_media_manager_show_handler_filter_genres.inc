@@ -1,9 +1,14 @@
 <?php
 
 /**
+ * @file
  * Filter handler for genres.
  */
-class pbs_media_manager_show_handler_filter_genres extends
+
+/**
+ * Extending the views_handler_filter_in_operator class for the genres filter.
+ */
+class PbsMediaManagerShowHandlerFilterGenres extends
  views_handler_filter_in_operator {
 
   /**
