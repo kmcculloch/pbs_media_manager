@@ -36,7 +36,7 @@ function pbs_media_manager_admin_site_settings() {
     '#title' => t('Media Manager Endpoint'),
     '#type' => 'select',
     '#options' => array(
-      PBS_MEDIA_MANAGER_STAGE_ENDPOINT => t('Staging)',
+      PBS_MEDIA_MANAGER_STAGE_ENDPOINT => t('Staging'),
       PBS_MEDIA_MANAGER_PRODUCTION_ENDPOINT => t('Production'),
     ),
     '#default_value' => variable_get('pbs_media_manager_endpoint', PBS_MEDIA_MANAGER_PRODUCTION_ENDPOINT),
