@@ -83,9 +83,8 @@ function pbs_media_manager_player_migrate_batch_operation($entity_type, $cove_fi
 
       // Construct the video's URL from the slug.
       $slug = $response['data']['attributes']['slug'];
-
-      // TODO: Replace 'beta' with 'www' once new PBS.org goes live.
-      $url = 'http://beta.pbs.org/video/' . $slug;
+      
+      $url = 'http://www.pbs.org/video/' . $slug;
 
       // Map the results to the field elements.
       $active->{$media_manager_field}[$field_language][$delta] = [
