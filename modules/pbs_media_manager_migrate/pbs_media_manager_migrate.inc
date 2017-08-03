@@ -83,7 +83,7 @@ function pbs_media_manager_player_migrate_batch_operation($entity_type, $cove_fi
 
       // Construct the video's URL from the slug.
       $slug = $response['data']['attributes']['slug'];
-      
+
       $url = 'http://www.pbs.org/video/' . $slug;
 
       // Map the results to the field elements.

@@ -170,7 +170,7 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
  * @param array $form_state
  *   Form state array.
  */
-function pbs_media_manager_migrate_element_validate(array $element, &$form_state) {
+function pbs_media_manager_migrate_element_validate(array $element, array &$form_state) {
   if (empty($element['#value']) || $element['#value'] == 'select') {
     form_error($element, t('%field is required.', array('%field' => $element['#title'])));
   }

@@ -139,14 +139,14 @@ function pbs_media_manager_migrate_fields_replace($form, $form_state) {
  * Helper function for populating select lists.
  *
  * @param string $module
- *    The module
+ *   The module.
  * @param string $bundle_selected
- *    The selected bundle
+ *   The selected bundle.
  * @param array $options
- *    The list of options
+ *   The list of options.
  *
  * @return array
- *    The altered list of options
+ *   The altered list of options.
  */
 function _pbs_media_manager_migrate_get_options($module, $bundle_selected, $options) {
 
