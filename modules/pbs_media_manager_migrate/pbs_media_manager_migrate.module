@@ -148,7 +148,7 @@ function pbs_media_manager_migrate_fields_replace($form, $form_state) {
  * @return array
  *   The altered list of options.
  */
-function _pbs_media_manager_migrate_get_options($module, $bundle_selected, $options) {
+function _pbs_media_manager_migrate_get_options($module, $bundle_selected, array $options) {
 
   if (isset($options[$bundle_selected][$module])) {
     $list = array('select' => t('-- Select a field --'));
