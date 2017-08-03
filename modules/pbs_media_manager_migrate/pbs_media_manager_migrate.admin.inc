@@ -167,7 +167,7 @@ function pbs_media_manager_migrate_form_submit(&$form, $form_state) {
  *
  * @param array $element
  *   Form element array.
- * @param $form_state
+ * @param array $form_state
  *   Form state array.
  */
 function pbs_media_manager_migrate_element_validate(array $element, &$form_state) {
