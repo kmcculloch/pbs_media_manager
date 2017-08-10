@@ -11,6 +11,8 @@
 class PbsMediaManagerShowEntityController extends EntityAPIController {
 
   /**
+   * Build the content.
+   *
    * @inheritdoc
    */
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
@@ -20,6 +22,8 @@ class PbsMediaManagerShowEntityController extends EntityAPIController {
   }
 
   /**
+   * Load the entity.
+   *
    * @inheritdoc
    */
   public function load($ids = array(), $conditions = array()) {
@@ -39,6 +43,8 @@ class PbsMediaManagerShowEntityController extends EntityAPIController {
   }
 
   /**
+   * Save the entity.
+   *
    * @inheritdoc
    */
   public function save($entity, DatabaseTransaction $transaction = NULL) {

@@ -12,6 +12,8 @@ class PbsMediaManagerShowHandlerFilterGenres extends
  views_handler_filter_in_operator {
 
   /**
+   * Get the list of possible genres.
+   *
    * @inheritdoc
    */
   public function get_value_options() {
