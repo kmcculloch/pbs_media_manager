@@ -692,7 +692,7 @@ class PBS_Media_Manager_API_Client {
    * @return array|mixed
    *   Returns the episode.
    */
-  public function get_episode($id, $queryargs = array()) {
+  public function get_episode($id, array $queryargs = array()) {
     return $this->get_item_of_type($id, 'episode', $queryargs);
   }
 
