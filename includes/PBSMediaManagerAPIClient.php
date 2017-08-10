@@ -113,8 +113,11 @@ class PBS_Media_Manager_API_Client {
   private function make_response_array($response) {
     $myarray = array();
     $data = explode("\n", $response);
-    $myarray['status'] = $data[0];
-    array_shift($data);
+    if (strpos($data[0], 'HTTP') === 0) {
+      // The first line is a status code.
+      $myarray['status'] = $data[0];
+      array_shift($data);
+    }
     foreach ($data as $part) {
       if (json_decode($part)) {
         $myarray[] = json_decode($part);
@@ -192,7 +195,7 @@ class PBS_Media_Manager_API_Client {
         "attributes" => $attribs,
       ),
     );
-    /* in the MM API, create is a POST */
+    /* In the MM API, create is a POST. */
     $payload_json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     $request_url = $this->base_endpoint . $endpoint;
     $ch = $this->build_curl_handle($request_url);
@@ -317,6 +320,7 @@ class PBS_Media_Manager_API_Client {
     $errors = curl_error($ch);
     curl_close($ch);
     if (!in_array($info['http_code'], array(200, 201, 202, 204))) {
+      $result = $this->make_response_array($result);
       return array(
         'errors' => array(
           'info' => $info,
@@ -350,6 +354,7 @@ class PBS_Media_Manager_API_Client {
     $errors = curl_error($ch);
     curl_close($ch);
     if (!in_array($info['http_code'], array(200, 201, 202, 204))) {
+      $result = $this->make_response_array($result);
       return array(
         'errors' => array(
           'info' => $info,
