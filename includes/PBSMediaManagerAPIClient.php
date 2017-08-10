@@ -181,7 +181,7 @@ class PBS_Media_Manager_API_Client {
    *   The attributes.
    *
    * @return array
-   *    On success returns the url path of the editable asset.
+   *   On success returns the url path of the editable asset.
    */
   public function create_child($parent_id, $parent_type, $type, array $attribs = array()) {
 
@@ -377,7 +377,7 @@ class PBS_Media_Manager_API_Client {
    *   The arguments for the query.
    *
    * @return array|mixed
-   *    The items.
+   *   The items.
    */
   public function get_item_of_type($id, $type, $private = FALSE, array $queryargs = array()) {
     $endpoint = "/" . $type . "s/" . $id . "/";
