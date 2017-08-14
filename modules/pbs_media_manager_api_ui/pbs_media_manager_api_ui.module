@@ -54,9 +54,11 @@ function pbs_media_manager_api_ui_tests_form(array $form, array &$form_state) {
     'table' => t('Data Explorer'),
     'simple' => t('Simple'),
   );
+  // @codingStandardsIgnoreStart
   if (function_exists('dpm')) {
     $formats['dpm'] = 'dpm()';
   }
+  // @codingStandardsIgnoreEnd
   $form['response_format'] = array(
     '#type' => 'select',
     '#title' => t('Response Format'),
@@ -826,9 +828,11 @@ function pbs_media_manager_api_ui_settings_form_submit_ajax_callback(array $form
 function _pbs_media_manager_ui_prep_results(array $response, $format) {
 
   switch ($format) {
+    // @codingStandardsIgnoreStart
     case 'dpm':
       dpm($response);
       return '<p>' . t('Request details above') . '</p>';
+      // @codingStandardsIgnoreEnd
 
     case 'table':
       return theme('table', _pbs_media_manager_ui_results_table($response));

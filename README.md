@@ -1,3 +1,4 @@
+@codingStandardsIgnoreFile
 #PBS Media Manager Module
 
 The Media Manager API allows stations, producers, and viewers of PBS.org search and view digital assets. This module is not officially affiliated with, or maintained by, PBS.
