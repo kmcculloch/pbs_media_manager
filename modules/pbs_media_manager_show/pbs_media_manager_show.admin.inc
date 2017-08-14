@@ -313,7 +313,7 @@ function pbs_media_manager_show_importer_form_submit($form, &$form_state) {
   }
 
   module_load_include('module', 'pbs_media_manager');
-  $response = pbs_media_manager_request('show', '', '', '', $args, $cache_expire = 0);
+  $response = pbs_media_manager_request('show', '', '', '', $args, 0);
 
   if (array_key_exists('errors', $response)) {
     drupal_set_message(t('Unable to get list of shows from PBS.'), 'error');

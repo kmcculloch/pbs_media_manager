@@ -156,7 +156,7 @@ function pbs_media_manager_player_field_validate($entity_type, $entity, $field, 
     $url = check_plain(trim($item['url']));
 
     // Check to see if the URL is valid and absolute.
-    if (!empty($url) && !valid_url($url, $absolute = TRUE)) {
+    if (!empty($url) && !valid_url($url, TRUE)) {
       $errors[$field['field_name']][$langcode][$delta][] = array(
         'error' => 'pbs_media_manager_player_invalid_url',
         'message' => t('%name: %url is not a valid URL.', array('%name' => $instance['label'], '%url' => $url)),

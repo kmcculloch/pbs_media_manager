@@ -29,8 +29,7 @@ function pbs_media_manager_player_migrate_batch_operation($entity_type, $cove_fi
   }
 
   // Load each entity.
-  $load = entity_load($entity_type, [$entity_id], $conditions = FALSE, $reset =
-    TRUE);
+  $load = entity_load($entity_type, [$entity_id], FALSE, TRUE);
 
   if (empty($load)) {
     return;

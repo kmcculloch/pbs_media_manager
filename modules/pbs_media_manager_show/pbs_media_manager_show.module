@@ -452,7 +452,7 @@ function pbs_media_manager_show_cron() {
         }
       }
 
-      $response = pbs_media_manager_request('show', '', '', '', $args, $cache_expire = 0);
+      $response = pbs_media_manager_request('show', '', '', '', $args, 0);
 
       if (!$response || !empty($response['errors'])) {
         watchdog('pbs_media_manager_show', 'Failed to get a response from pbs_media_manager, update failed', array(), WATCHDOG_ERROR);
@@ -460,7 +460,7 @@ function pbs_media_manager_show_cron() {
       }
 
       // TODO: refactor to use queue or other less risky structure.
-      foreach ($response as $idx => $raw_prog) {
+      foreach ($response as $raw_prog) {
         $useless = array();
         pbs_media_manager_show_importer_batch_operation($raw_prog, $useless);
       }

@@ -100,7 +100,7 @@ function _pbs_media_manager_migrate_prepare_fields($fields = NULL) {
 
   foreach ($fields as $field) {
     // Load the field instances.
-    $field_instances = field_read_instances(array('field_name' => $field['field_name']), $include_additional = array('include_inactive'));
+    $field_instances = field_read_instances(array('field_name' => $field['field_name']), array('include_inactive'));
 
     foreach ($field_instances as $instance) {
       // If it's a COVE field and doesn't have a migration flag, set it.
